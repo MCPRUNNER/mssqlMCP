@@ -1,0 +1,17 @@
+{
+  "name": "SQL Server MCP Example",
+  "version": "1.0.0",
+  "description": "Example of using SQL Server MCP with Copilot",
+  "scripts": {
+    "start-mcp-server": "cd .. && dotnet run --project mssqlMCP.csproj"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
+}

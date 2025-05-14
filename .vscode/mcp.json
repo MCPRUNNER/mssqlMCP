@@ -1,0 +1,6 @@
+{    "servers": {
+        "sql-server-mcp": {
+            "url": "http://localhost:3001"
+        }
+    }
+}
