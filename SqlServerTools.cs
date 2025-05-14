@@ -38,12 +38,24 @@ namespace mssqlMCP
             {
                 var connectionString = GetConnectionString(connectionName);
                 using var connection = new SqlConnection(connectionString);
-                await connection.OpenAsync();
-                _logger.LogInformation("Successfully connected to SQL Server database");
-                await connection.CloseAsync();
-                return $"Successfully connected to SQL Server database using connection: {connectionName}";
+
+                // Create a cancellation token source with a reasonable timeout
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+                try
+                {
+                    await connection.OpenAsync(cts.Token);
+                    _logger.LogInformation("Successfully connected to SQL Server database");
+                    await connection.CloseAsync();
+                    return $"Successfully connected to SQL Server database using connection: {connectionName}";
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Connection attempt timed out or was canceled");
+                    throw new TimeoutException("Connection attempt timed out. Check your database server.");
+                }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 _logger.LogError(ex, "Error initializing SQL Server connection");
                 throw;
@@ -67,41 +79,75 @@ namespace mssqlMCP
         public static async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
         {
             _logger.LogInformation($"Executing query: {query}");
+
+            // Create a cancellation token source with a reasonable timeout for database operations
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+
             try
             {
                 var connectionString = GetConnectionString(connectionName);
                 using var connection = new SqlConnection(connectionString);
-                await connection.OpenAsync();
 
-                using var command = new SqlCommand(query, connection);
-                using var reader = await command.ExecuteReaderAsync();
+                try
+                {
+                    await connection.OpenAsync(cts.Token);
 
-                var dataTable = new DataTable();
-                dataTable.Load(reader);
+                    using var command = new SqlCommand(query, connection);
+                    command.CommandTimeout = 60; // Set command timeout in seconds
 
-                return ConvertDataTableToJson(dataTable);
+                    using var reader = await command.ExecuteReaderAsync(cts.Token);
+
+                    var dataTable = new DataTable();
+                    dataTable.Load(reader);
+
+                    return ConvertDataTableToJson(dataTable);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Query execution was canceled or timed out");
+                    throw new TimeoutException("The SQL query execution timed out or was canceled.");
+                }
             }
-            catch (Exception ex)
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, $"SQL error executing query: {query}");
+                throw;
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
             {
                 _logger.LogError(ex, $"Error executing query: {query}");
                 throw;
             }
         }
         [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
-        public static async Task<string> GetTableMetadata(string connectionName = "DefaultConnection")
+        public static async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
         {
+            _logger.LogInformation("Getting table metadata for connection: {ConnectionName}, schema: {Schema}", connectionName, schema ?? "all schemas");
+            // Create a cancellation token source with a reasonable timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120)); // 2 minutes timeout for metadata
+
             try
             {
                 var connectionString = GetConnectionString(connectionName);
                 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
-                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
-
-                var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync();
-
-                return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });
+                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger); try
+                {
+                    var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync(cts.Token, schema);
+                    return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Metadata retrieval was canceled or timed out");
+                    throw new TimeoutException("The metadata retrieval timed out or was canceled.");
+                }
             }
-            catch (Exception ex)
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL error getting table metadata");
+                throw;
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
             {
                 _logger.LogError(ex, "Error getting table metadata");
                 throw;

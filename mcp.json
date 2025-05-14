@@ -87,16 +87,21 @@
       "returns": {
         "type": "string"
       }
-    },
-    {
+    },    {
       "name": "getTableMetadata",
-      "description": "Gets metadata about the database tables",
+      "description": "Gets detailed metadata about the database tables, columns, primary keys and foreign keys",
       "parameters": [
         {
           "name": "connectionName",
           "type": "string",
           "description": "The name of the connection string to use",
           "default": "DefaultConnection"
+        },
+        {
+          "name": "schema",
+          "type": "string",
+          "description": "The database schema to filter (optional). If not specified, all schemas will be included.",
+          "required": false
         }
       ],
       "returns": {

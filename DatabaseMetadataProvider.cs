@@ -14,18 +14,23 @@ namespace mssqlMCP
             _logger = logger;
         }
 
-        public async Task<List<TableInfo>> GetDatabaseSchemaAsync()
+        // Helper method to create SQL command with timeout
+        private SqlCommand CreateCommandWithTimeout(string commandText, SqlConnection connection)
         {
-            _logger.LogInformation("Retrieving database schema");
+            var command = new SqlCommand(commandText, connection);
+            command.CommandTimeout = 30; // 30 second timeout
+            return command;
+        }
+        public async Task<List<TableInfo>> GetDatabaseSchemaAsync(CancellationToken cancellationToken = default, string? schema = null)
+        {
+            _logger.LogInformation("Retrieving database schema" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
 
             var tables = new List<TableInfo>();
 
             try
             {
                 using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync();
-
-                var tableQuery = @"
+                await connection.OpenAsync(cancellationToken); var tableQuery = @"
                     SELECT 
                         t.TABLE_CATALOG,
                         t.TABLE_SCHEMA,
@@ -35,18 +40,22 @@ namespace mssqlMCP
                         INFORMATION_SCHEMA.TABLES t
                     WHERE 
                         t.TABLE_TYPE = 'BASE TABLE'
+                        " + (schema != null ? "AND t.TABLE_SCHEMA = @SchemaName" : "") + @"
                     ORDER BY 
                         t.TABLE_SCHEMA, t.TABLE_NAME";
 
-                using var tableCommand = new SqlCommand(tableQuery, connection);
-                using var tableReader = await tableCommand.ExecuteReaderAsync();
-
-                var tableNames = new List<(string Schema, string Name)>();
-                while (await tableReader.ReadAsync())
+                using var tableCommand = CreateCommandWithTimeout(tableQuery, connection);
+                if (schema != null)
                 {
-                    var schema = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
+                    tableCommand.Parameters.AddWithValue("@SchemaName", schema);
+                }
+                using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
+
+                var tableNames = new List<(string Schema, string Name)>(); while (await tableReader.ReadAsync(cancellationToken))
+                {
+                    var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
                     var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
-                    tableNames.Add((schema, name));
+                    tableNames.Add((schemaName, name));
                 }
                 await tableReader.CloseAsync();
 
@@ -59,21 +68,24 @@ namespace mssqlMCP
                         Columns = new List<ColumnInfo>(),
                         PrimaryKeys = new List<string>(),
                         ForeignKeys = new List<ForeignKeyInfo>()
-                    };
-
-                    // Get columns
-                    await GetColumnsAsync(connection, tableInfo);
+                    };                    // Get columns
+                    await GetColumnsAsync(connection, tableInfo, cancellationToken);
 
                     // Get primary keys
-                    await GetPrimaryKeysAsync(connection, tableInfo);
+                    await GetPrimaryKeysAsync(connection, tableInfo, cancellationToken);
 
                     // Get foreign keys
-                    await GetForeignKeysAsync(connection, tableInfo);
+                    await GetForeignKeysAsync(connection, tableInfo, cancellationToken);
 
                     tables.Add(tableInfo);
                 }
 
                 return tables;
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning(ex, "Database schema retrieval operation was canceled");
+                throw; // Let the calling code handle cancellation
             }
             catch (Exception ex)
             {
@@ -81,8 +93,7 @@ namespace mssqlMCP
                 throw;
             }
         }
-
-        private async Task GetColumnsAsync(SqlConnection connection, TableInfo tableInfo)
+        private async Task GetColumnsAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var columnQuery = @"
                 SELECT 
@@ -99,15 +110,13 @@ namespace mssqlMCP
                     c.TABLE_SCHEMA = @Schema
                     AND c.TABLE_NAME = @TableName
                 ORDER BY 
-                    c.ORDINAL_POSITION";
-
-            using var command = new SqlCommand(columnQuery, connection);
+                    c.ORDINAL_POSITION"; using var command = CreateCommandWithTimeout(columnQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(cancellationToken))
             {
                 var columnInfo = new ColumnInfo
                 {
@@ -123,8 +132,7 @@ namespace mssqlMCP
                 tableInfo.Columns.Add(columnInfo);
             }
         }
-
-        private async Task GetPrimaryKeysAsync(SqlConnection connection, TableInfo tableInfo)
+        private async Task GetPrimaryKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var pkQuery = @"
                 SELECT 
@@ -137,14 +145,12 @@ namespace mssqlMCP
                 WHERE 
                     tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
                     AND tc.TABLE_SCHEMA = @Schema
-                    AND tc.TABLE_NAME = @TableName";
-
-            using var command = new SqlCommand(pkQuery, connection);
+                    AND tc.TABLE_NAME = @TableName"; using var command = CreateCommandWithTimeout(pkQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
             {
                 var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
                 tableInfo.PrimaryKeys.Add(columnName);
@@ -157,8 +163,7 @@ namespace mssqlMCP
                 }
             }
         }
-
-        private async Task GetForeignKeysAsync(SqlConnection connection, TableInfo tableInfo)
+        private async Task GetForeignKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var fkQuery = @"
                 SELECT 
@@ -179,15 +184,13 @@ namespace mssqlMCP
                     sys.columns c2 ON fkc.referenced_column_id = c2.column_id AND fkc.referenced_object_id = c2.object_id
                 WHERE 
                     OBJECT_SCHEMA_NAME(fk.parent_object_id) = @Schema
-                    AND OBJECT_NAME(fk.parent_object_id) = @TableName";
-
-            using var command = new SqlCommand(fkQuery, connection);
+                    AND OBJECT_NAME(fk.parent_object_id) = @TableName"; using var command = CreateCommandWithTimeout(fkQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync())
+            while (await reader.ReadAsync(cancellationToken))
             {
                 var fkInfo = new ForeignKeyInfo
                 {

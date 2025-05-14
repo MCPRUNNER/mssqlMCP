@@ -68,7 +68,29 @@ You can modify or add new connection strings as needed.
 - `f1Echo`: Alternative echo function (F1 version)
 - `initialize`: Initializes the SQL Server connection
 - `executeQuery`: Executes a SQL query and returns results as JSON
-- `getTableMetadata`: Retrieves metadata about database tables, columns, keys, etc.
+- `getTableMetadata`: Retrieves metadata about database tables, columns, keys, etc. You can filter by schema or get all schemas.
+
+### Schema Filtering
+
+The `getTableMetadata` tool supports schema filtering, which allows you to retrieve metadata for tables in a specific schema:
+
+#### Usage Examples
+
+```csharp
+// Get all database metadata (all schemas)
+var metadata = await GetTableMetadata();
+
+// Get metadata for a specific connection (all schemas)
+var awMetadata = await GetTableMetadata("AdventureWorks");
+
+// Get metadata for tables in a specific schema
+var dboSchemaMetadata = await GetTableMetadata("DefaultConnection", "dbo");
+
+// Get metadata for a specific schema in a specific database
+var awSalesSchema = await GetTableMetadata("AdventureWorks", "Sales");
+```
+
+This feature is particularly useful when working with large databases that have many schemas, allowing you to focus on just the relevant parts of the database structure.
 
 ## Example Usage
 
@@ -99,11 +121,17 @@ var salesData = await ExecuteQuery("SELECT * FROM Sales.SalesOrderHeader", "Adve
 ### Getting Database Metadata
 
 ```csharp
-// Get all database metadata
+// Get all database metadata (all schemas)
 var metadata = await GetTableMetadata();
 
-// Get metadata for a specific connection
+// Get metadata for a specific connection (all schemas)
 var awMetadata = await GetTableMetadata("AdventureWorks");
+
+// Get metadata for tables in a specific schema
+var dboSchemaMetadata = await GetTableMetadata("DefaultConnection", "dbo");
+
+// Get metadata for a specific schema in a specific database
+var awSalesSchema = await GetTableMetadata("AdventureWorks", "Sales");
 ```
 
 ### Common SQL Query Examples
