@@ -1,8 +1,13 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using mssqlMCP.Configuration;
+using mssqlMCP.Interfaces;
+using mssqlMCP.Services;
+using mssqlMCP.Tools;
 using Serilog;
 using System.ComponentModel;
-using mssqlMCP; // Add reference to our namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,10 +19,14 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add services
+// Add MCP services
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithToolsFromAssembly();
+    .WithTools<SqlServerTools>();
+
+// Add our SQL Server MCP services
+builder.Services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
+builder.Services.AddTransient<ISqlServerTools, SqlServerTools>();
 
 // Add CORS support
 builder.Services.AddCors(options =>
@@ -73,25 +82,67 @@ app.UseSerilogRequestLogging(options =>
 app.MapGet("/api/test", () => "SQL Server MCP Server is running!");
 
 // Add a direct endpoint for testing schema filtering
-app.MapGet("/api/tables", async (string? schema, IConfiguration config, ILoggerFactory loggerFactory) =>
+app.MapGet("/api/tables", async (string? schema, string? connectionName, IConfiguration config, ILoggerFactory loggerFactory) =>
 {
+    // Default to DefaultConnection if not specified
+    connectionName ??= "DefaultConnection";
+
     try
     {
-        var connectionString = config.GetConnectionString("DefaultConnection");
+        var connectionString = config.GetConnectionString(connectionName);
         if (string.IsNullOrEmpty(connectionString))
         {
-            return Results.Problem("Connection string not found");
+            return Results.Problem(
+                title: "Configuration Error",
+                detail: $"Connection string '{connectionName}' not found.",
+                statusCode: 400);
         }
 
-        var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
-        var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+        var logger = loggerFactory.CreateLogger<mssqlMCP.Services.DatabaseMetadataProvider>();
+        var metadataProvider = new mssqlMCP.Services.DatabaseMetadataProvider(connectionString, logger);
 
-        var tables = await metadataProvider.GetDatabaseSchemaAsync(default, schema);
-        return Results.Ok(tables);
+        try
+        {
+            var tables = await metadataProvider.GetDatabaseSchemaAsync(default, schema);
+            return Results.Ok(tables);
+        }
+        catch (SqlException sqlEx)
+        {
+            // Handle SQL exceptions with user-friendly messages
+            if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+            {
+                return Results.Problem(
+                    title: "Authentication failed",
+                    detail: "Database authentication failed. Check your connection credentials.",
+                    statusCode: 401);
+            }
+            else if (sqlEx.Number == 2 || sqlEx.Number == 53)
+            {
+                return Results.Problem(
+                    title: "Server unavailable",
+                    detail: "Database server not found or not accessible.",
+                    statusCode: 503);
+            }
+
+            return Results.Problem(
+                title: "Database error",
+                detail: sqlEx.Message,
+                statusCode: 500);
+        }
+        catch (OperationCanceledException)
+        {
+            return Results.Problem(
+                title: "Operation timeout",
+                detail: "The operation timed out or was canceled.",
+                statusCode: 408);
+        }
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Error getting tables: {ex.Message}");
+        return Results.Problem(
+            title: "Error retrieving database tables",
+            detail: ex.Message,
+            statusCode: 500);
     }
 });
 
@@ -100,19 +151,62 @@ app.UseExceptionHandler(appError =>
     appError.Run(async context =>
     {
         context.Response.StatusCode = 500;
-        context.Response.ContentType = "text/plain";
+        context.Response.ContentType = "application/json";
 
         var exceptionHandlerFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-        if (exceptionHandlerFeature?.Error is OperationCanceledException)
+        var error = exceptionHandlerFeature?.Error;
+
+        if (error is OperationCanceledException)
         {
             // Handle client disconnect gracefully
             Log.Debug("Client disconnected - operation canceled");
             context.Response.StatusCode = 499; // Client Closed Request
-            await context.Response.WriteAsync("Client disconnected");
+            await context.Response.WriteAsync("{\"error\": \"Client disconnected\"}");
+            return;
+        }
+        else if (error is SqlException sqlEx)
+        {
+            // Handle SQL exceptions with specific error messages
+            Log.Error(sqlEx, "SQL exception occurred");
+
+            if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+            {
+                // Login failed
+                context.Response.StatusCode = 401; // Unauthorized
+                await context.Response.WriteAsync("{\"error\": \"Database authentication failed. Check your connection credentials.\"}");
+                return;
+            }
+            else if (sqlEx.Number == 2 || sqlEx.Number == 53)
+            {
+                // Server not found or not accessible
+                context.Response.StatusCode = 503; // Service Unavailable
+                await context.Response.WriteAsync("{\"error\": \"Database server not found or not accessible. Check server name and network connection.\"}");
+                return;
+            }
+            else if (sqlEx.Number == 4064)
+            {
+                // Database not found
+                context.Response.StatusCode = 404; // Not Found
+                await context.Response.WriteAsync("{\"error\": \"Database not found. Check database name.\"}");
+                return;
+            }
+
+            // General SQL error
+            await context.Response.WriteAsync("{\"error\": \"A database error occurred. Please check your query or connection details.\"}");
+            return;
+        }
+        else if (error is TimeoutException)
+        {
+            // Handle timeout errors
+            Log.Warning(error, "Operation timed out");
+            context.Response.StatusCode = 504; // Gateway Timeout
+            await context.Response.WriteAsync("{\"error\": \"Operation timed out. The database server might be busy or the query is too complex.\"}");
             return;
         }
 
-        await context.Response.WriteAsync("An error occurred. Please try again later.");
+        // Generic error handler
+        Log.Error(error, "Unhandled exception");
+        await context.Response.WriteAsync("{\"error\": \"An unexpected error occurred. Please try again later.\"}");
     });
 });
 

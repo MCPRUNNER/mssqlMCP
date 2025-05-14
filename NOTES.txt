@@ -1,0 +1,2 @@
+   at mssqlMCP.Services.DatabaseMetadataProvider.GetDatabaseSchemaAsync(CancellationToken cancellationToken, String schema) in C:\Users\U00001\source\repos\MCP\mssqlMCP\Services\DatabaseMetadataProvider.cs:line 53
+   at mssqlMCP.Tools.SqlServerTools.GetTableMetadata(String connectionName, String schema) in C:\Users\U00001\source\repos\MCP\mssqlMCP\Tools\SqlServerTools.cs:line 175

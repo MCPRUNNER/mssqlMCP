@@ -2,41 +2,44 @@ using System.ComponentModel;
 using System.Data;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using mssqlMCP.Interfaces;
+using mssqlMCP.Services;
 
-namespace mssqlMCP
+namespace mssqlMCP.Tools
 {
+    /// <summary>
+    /// Provides MCP tools for SQL Server integration
+    /// </summary>
     [McpServerToolType]
-    public static class SqlServerTools
+    public class SqlServerTools : ISqlServerTools
     {
-        private static readonly ILogger<Program> _logger = LoggerFactory.Create(builder =>
-            builder.AddConsole()).CreateLogger<Program>();
+        private readonly ILogger<SqlServerTools> _logger;
+        private readonly IConnectionStringProvider _connectionStringProvider;
 
-        private static string GetConnectionString(string? connectionName = null)
+        /// <summary>
+        /// Initializes a new instance of the SqlServerTools class
+        /// </summary>
+        /// <param name="logger">Logger for the tools</param>
+        /// <param name="connectionStringProvider">Provider for connection strings</param>
+        public SqlServerTools(
+            ILogger<SqlServerTools> logger,
+            IConnectionStringProvider connectionStringProvider)
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .AddEnvironmentVariables()
-                .Build();
-
-            var connStr = connectionName != null && !string.IsNullOrEmpty(connectionName)
-                ? config.GetConnectionString(connectionName) ?? config.GetConnectionString("DefaultConnection")
-                : config.GetConnectionString("DefaultConnection");
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new InvalidOperationException("Connection string not found");
-            }
-
-            return connStr;
+            _logger = logger;
+            _connectionStringProvider = connectionStringProvider;
         }
+
+        /// <summary>
+        /// Initialize the SQL Server connection
+        /// </summary>
         [McpServerTool, Description("Initialize the SQL Server connection.")]
-        public static async Task<string> Initialize(string connectionName = "DefaultConnection")
+        public async Task<string> Initialize(string connectionName = "DefaultConnection")
         {
             try
             {
-                var connectionString = GetConnectionString(connectionName);
+                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
                 using var connection = new SqlConnection(connectionString);
 
                 // Create a cancellation token source with a reasonable timeout
@@ -52,31 +55,53 @@ namespace mssqlMCP
                 catch (OperationCanceledException)
                 {
                     _logger.LogWarning("Connection attempt timed out or was canceled");
-                    throw new TimeoutException("Connection attempt timed out. Check your database server.");
+                    return "Connection attempt timed out. Check if your database server is running and accessible.";
                 }
             }
-            catch (Exception ex) when (!(ex is OperationCanceledException))
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL error initializing connection");
+
+                // Check for login failure errors (error numbers 4060, 18456, 18452, etc.)
+                if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+                {
+                    return $"Login failed: Unable to access database with connection '{connectionName}'. Please check your credentials and permissions.";
+                }
+
+                return $"Database error occurred while connecting to '{connectionName}'.";
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException || ex is SqlException))
             {
                 _logger.LogError(ex, "Error initializing SQL Server connection");
-                throw;
+                return $"An unexpected error occurred while connecting to the database.";
             }
         }
 
+        /// <summary>
+        /// Echoes the message back to the client
+        /// </summary>
         [McpServerTool, Description("Echoes the message back to the client.")]
-        public static string Echo(string message)
+        public string Echo(string message)
         {
             _logger.LogInformation($"Echo received: {message}");
             return message;
         }
 
+        /// <summary>
+        /// Echoes the message back to the client. F1 version.
+        /// </summary>
         [McpServerTool, Description("Echoes the message back to the client. F1 version.")]
-        public static string F1Echo(string message)
+        public string F1Echo(string message)
         {
             _logger.LogInformation($"F1 Echo received: {message}");
             return message;
         }
+
+        /// <summary>
+        /// Executes a SQL query and returns the results as JSON
+        /// </summary>
         [McpServerTool, Description("Executes a SQL query and returns the results as JSON.")]
-        public static async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
+        public async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
         {
             _logger.LogInformation($"Executing query: {query}");
 
@@ -85,7 +110,7 @@ namespace mssqlMCP
 
             try
             {
-                var connectionString = GetConnectionString(connectionName);
+                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
                 using var connection = new SqlConnection(connectionString);
 
                 try
@@ -105,33 +130,47 @@ namespace mssqlMCP
                 catch (OperationCanceledException)
                 {
                     _logger.LogWarning("Query execution was canceled or timed out");
-                    throw new TimeoutException("The SQL query execution timed out or was canceled.");
+                    return "{ \"error\": \"The SQL query execution timed out. Your query might be too complex or the database server is busy.\" }";
                 }
             }
             catch (SqlException sqlEx)
             {
                 _logger.LogError(sqlEx, $"SQL error executing query: {query}");
-                throw;
+
+                // Check for login failure errors (error numbers 4060, 18456, 18452, etc.)
+                if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+                {
+                    return "{ \"error\": \"Cannot access database or connection. Authentication failed.\" }";
+                }
+
+                return "{ \"error\": \"Database error occurred while executing query.\" }";
             }
             catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
             {
                 _logger.LogError(ex, $"Error executing query: {query}");
-                throw;
+                return "{ \"error\": \"An unexpected error occurred while executing query.\" }";
             }
         }
+
+        /// <summary>
+        /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
+        /// </summary>
         [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
-        public static async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
+        public async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
         {
             _logger.LogInformation("Getting table metadata for connection: {ConnectionName}, schema: {Schema}", connectionName, schema ?? "all schemas");
+
             // Create a cancellation token source with a reasonable timeout
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120)); // 2 minutes timeout for metadata
 
             try
             {
-                var connectionString = GetConnectionString(connectionName);
+                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
                 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
-                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger); try
+                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+
+                try
                 {
                     var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync(cts.Token, schema);
                     return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });
@@ -139,20 +178,35 @@ namespace mssqlMCP
                 catch (OperationCanceledException)
                 {
                     _logger.LogWarning("Metadata retrieval was canceled or timed out");
-                    throw new TimeoutException("The metadata retrieval timed out or was canceled.");
+                    return "{ \"error\": \"The metadata retrieval timed out. The database schema might be very large or the server is busy.\" }";
                 }
             }
             catch (SqlException sqlEx)
             {
                 _logger.LogError(sqlEx, "SQL error getting table metadata");
-                throw;
+
+                // Check for login failure errors (error numbers 4060, 18456, 18452, etc.)
+                if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+                {
+                    // Return a simple message instead of throwing an exception
+                    return "{ \"error\": \"Cannot access database or connection. Authentication failed.\" }";
+                }
+
+                // For other SQL errors, provide generic message
+                return "{ \"error\": \"Database error occurred while retrieving metadata.\" }";
             }
             catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
             {
                 _logger.LogError(ex, "Error getting table metadata");
-                throw;
+                return "{ \"error\": \"An unexpected error occurred while retrieving table metadata.\" }";
             }
         }
+
+        /// <summary>
+        /// Converts a DataTable to JSON string
+        /// </summary>
+        /// <param name="dataTable">The DataTable to convert</param>
+        /// <returns>JSON representation of the DataTable</returns>
         private static string ConvertDataTableToJson(DataTable dataTable)
         {
             var rows = new List<Dictionary<string, object?>>();

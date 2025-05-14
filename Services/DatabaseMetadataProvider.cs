@@ -1,26 +1,46 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
+using mssqlMCP.Interfaces;
+using mssqlMCP.Models;
 using System.Data;
 
-namespace mssqlMCP
+namespace mssqlMCP.Services
 {
-    public class DatabaseMetadataProvider
+    /// <summary>
+    /// Service that provides metadata information about SQL Server databases
+    /// </summary>
+    public class DatabaseMetadataProvider : IDatabaseMetadataProvider
     {
         private readonly string _connectionString;
         private readonly ILogger<DatabaseMetadataProvider> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the DatabaseMetadataProvider with connection string and logger
+        /// </summary>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="logger">Logger for the provider</param>
         public DatabaseMetadataProvider(string connectionString, ILogger<DatabaseMetadataProvider> logger)
         {
             _connectionString = connectionString;
             _logger = logger;
         }
 
-        // Helper method to create SQL command with timeout
+        /// <summary>
+        /// Helper method to create SQL command with timeout
+        /// </summary>
         private SqlCommand CreateCommandWithTimeout(string commandText, SqlConnection connection)
         {
             var command = new SqlCommand(commandText, connection);
             command.CommandTimeout = 30; // 30 second timeout
             return command;
         }
+
+        /// <summary>
+        /// Gets database schema metadata asynchronously
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token for the operation</param>
+        /// <param name="schema">Optional filter for specific schema, null returns all schemas</param>
+        /// <returns>List of table metadata information</returns>
         public async Task<List<TableInfo>> GetDatabaseSchemaAsync(CancellationToken cancellationToken = default, string? schema = null)
         {
             _logger.LogInformation("Retrieving database schema" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
@@ -30,7 +50,9 @@ namespace mssqlMCP
             try
             {
                 using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync(cancellationToken); var tableQuery = @"
+                await connection.OpenAsync(cancellationToken);
+
+                var tableQuery = @"
                     SELECT 
                         t.TABLE_CATALOG,
                         t.TABLE_SCHEMA,
@@ -51,7 +73,9 @@ namespace mssqlMCP
                 }
                 using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
 
-                var tableNames = new List<(string Schema, string Name)>(); while (await tableReader.ReadAsync(cancellationToken))
+                var tableNames = new List<(string Schema, string Name)>();
+
+                while (await tableReader.ReadAsync(cancellationToken))
                 {
                     var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
                     var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
@@ -68,7 +92,9 @@ namespace mssqlMCP
                         Columns = new List<ColumnInfo>(),
                         PrimaryKeys = new List<string>(),
                         ForeignKeys = new List<ForeignKeyInfo>()
-                    };                    // Get columns
+                    };
+
+                    // Get columns
                     await GetColumnsAsync(connection, tableInfo, cancellationToken);
 
                     // Get primary keys
@@ -87,12 +113,32 @@ namespace mssqlMCP
                 _logger.LogWarning(ex, "Database schema retrieval operation was canceled");
                 throw; // Let the calling code handle cancellation
             }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "SQL error retrieving database schema");
+
+                // Add specific error handling for known SQL error codes
+                if (ex.Number == 208) // Invalid object name
+                {
+                    _logger.LogWarning("Attempted to query a non-existent table or view");
+                }
+                else if (ex.Number == 4060 || ex.Number == 18456) // Login failures
+                {
+                    _logger.LogWarning("Authentication or access denied error");
+                }
+
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving database schema");
                 throw;
             }
         }
+
+        /// <summary>
+        /// Retrieves column metadata for a specific table
+        /// </summary>
         private async Task GetColumnsAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var columnQuery = @"
@@ -110,7 +156,9 @@ namespace mssqlMCP
                     c.TABLE_SCHEMA = @Schema
                     AND c.TABLE_NAME = @TableName
                 ORDER BY 
-                    c.ORDINAL_POSITION"; using var command = CreateCommandWithTimeout(columnQuery, connection);
+                    c.ORDINAL_POSITION";
+
+            using var command = CreateCommandWithTimeout(columnQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
@@ -132,6 +180,10 @@ namespace mssqlMCP
                 tableInfo.Columns.Add(columnInfo);
             }
         }
+
+        /// <summary>
+        /// Retrieves primary key metadata for a specific table
+        /// </summary>
         private async Task GetPrimaryKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var pkQuery = @"
@@ -145,11 +197,14 @@ namespace mssqlMCP
                 WHERE 
                     tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
                     AND tc.TABLE_SCHEMA = @Schema
-                    AND tc.TABLE_NAME = @TableName"; using var command = CreateCommandWithTimeout(pkQuery, connection);
+                    AND tc.TABLE_NAME = @TableName";
+
+            using var command = CreateCommandWithTimeout(pkQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
             while (await reader.ReadAsync(cancellationToken))
             {
                 var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
@@ -163,6 +218,10 @@ namespace mssqlMCP
                 }
             }
         }
+
+        /// <summary>
+        /// Retrieves foreign key metadata for a specific table
+        /// </summary>
         private async Task GetForeignKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
         {
             var fkQuery = @"
@@ -184,7 +243,9 @@ namespace mssqlMCP
                     sys.columns c2 ON fkc.referenced_column_id = c2.column_id AND fkc.referenced_object_id = c2.object_id
                 WHERE 
                     OBJECT_SCHEMA_NAME(fk.parent_object_id) = @Schema
-                    AND OBJECT_NAME(fk.parent_object_id) = @TableName"; using var command = CreateCommandWithTimeout(fkQuery, connection);
+                    AND OBJECT_NAME(fk.parent_object_id) = @TableName";
+
+            using var command = CreateCommandWithTimeout(fkQuery, connection);
             command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
             command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
@@ -212,60 +273,5 @@ namespace mssqlMCP
                 }
             }
         }
-    }
-    public class TableInfo
-    {
-        public string Schema { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public List<ColumnInfo> Columns { get; set; } = new List<ColumnInfo>();
-        public List<string> PrimaryKeys { get; set; } = new List<string>();
-        public List<ForeignKeyInfo> ForeignKeys { get; set; } = new List<ForeignKeyInfo>();
-    }
-
-    public class ColumnInfo
-    {
-        public string Name { get; set; } = string.Empty;
-        public string DataType { get; set; } = string.Empty;
-        public bool IsNullable
-        {
-            get; set;
-        }
-        public int? MaxLength
-        {
-            get; set;
-        }
-        public int? Precision
-        {
-            get; set;
-        }
-        public int? Scale
-        {
-            get; set;
-        }
-        public string? DefaultValue
-        {
-            get; set;
-        }
-        public bool IsPrimaryKey
-        {
-            get; set;
-        }
-        public bool IsForeignKey
-        {
-            get; set;
-        }
-        public string? ForeignKeyReference
-        {
-            get; set;
-        }
-    }
-
-    public class ForeignKeyInfo
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Column { get; set; } = string.Empty;
-        public string ReferencedSchema { get; set; } = string.Empty;
-        public string ReferencedTable { get; set; } = string.Empty;
-        public string ReferencedColumn { get; set; } = string.Empty;
     }
 }
