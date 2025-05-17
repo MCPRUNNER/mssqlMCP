@@ -113,6 +113,7 @@ The project exposes connection management features through:
 
 1. **ConnectionManager class**: For use within the application
 2. **ConnectionManagerTool**: MCP tool for client applications to manage connections
+3. **Connection Security Tools**: For encrypting and managing connection string security including key rotation and encryption status verification
 
 ### Using Connection Management
 
@@ -120,9 +121,26 @@ The project exposes connection management features through:
 
 Run the included script to start the server with sample connections:
 
-```
+```powershell
 ./start-mcp-with-connections.ps1
 ```
+
+#### Starting with Encryption Enabled
+
+For enhanced security, use the encryption-enabled starter script:
+
+```powershell
+./Start-MCP-Encrypted.ps1
+```
+
+This script automatically generates a cryptographically secure random key using System.Security.Cryptography.RandomNumberGenerator, sets it as an environment variable, and starts the server with encryption enabled. You can also provide your own key:
+
+```powershell
+$env:MSSQL_MCP_KEY = "your-secure-key"
+./Start-MCP-Encrypted.ps1
+```
+
+For production environments, you should store the key securely and set the environment variable externally using a secrets management solution.
 
 #### Managing Connections through MCP
 
@@ -705,18 +723,27 @@ To enhance security, connection strings are encrypted with AES-256 encryption be
 
 To enable secure connection string encryption:
 
-1. Set the `MSSQL_MCP_KEY` environment variable to a strong random value.
-2. Use the provided `Start-MCP-Encrypted.ps1` script to start the server with encryption enabled.
+1. Set the `MSSQL_MCP_KEY` environment variable to a strong random value, or
+2. Use the provided `Start-MCP-Encrypted.ps1` script which will generate a cryptographically secure random key for you and start the server with encryption enabled.
 
 ```powershell
-# Set the encryption key (should be a strong random value)
+# Option 1: Set the encryption key manually (should be a strong random value)
 $env:MSSQL_MCP_KEY = "your-strong-random-key"
+dotnet run
 
-# Start the server
+# Option 2: Use the automated script that handles key generation and server startup
 ./Start-MCP-Encrypted.ps1
 ```
 
-If the `MSSQL_MCP_KEY` environment variable is not set, the server will still function but will use a default insecure key. This is not recommended for production use.
+The `Start-MCP-Encrypted.ps1` script:
+
+1. Checks if the encryption key is already set
+2. Generates a cryptographically secure random key (using System.Security.Cryptography.RandomNumberGenerator) if none exists
+3. Sets the environment variable for the current session
+4. Displays the key (securely store this for later use)
+5. Starts the MCP server with encryption enabled
+
+If the `MSSQL_MCP_KEY` environment variable is not set and you don't use the script, the server will still function but will use a default insecure key. This is not recommended for production use. For production environments, consider using a secure secrets management solution to store and retrieve your encryption key.
 
 ### Security Best Practices
 
@@ -790,12 +817,19 @@ To run the server with encryption enabled, use the provided script:
 
 This script:
 
-1. Generates a random encryption key if one is not provided
+1. Generates a cryptographically secure random key if one is not provided
 2. Sets the key as an environment variable for the current session
 3. Displays the key for you to save securely
-4. Starts the MCP server
+4. Starts the MCP server with encryption enabled
 
-For production environments, you should set the environment variable externally.
+You can also provide your own key:
+
+```powershell
+$env:MSSQL_MCP_KEY = "your-secure-key"
+./Start-MCP-Encrypted.ps1
+```
+
+For production environments, you should store the key securely and set the environment variable externally using a secrets management solution.
 
 ### Key Rotation
 
@@ -829,14 +863,22 @@ The following MCP commands are available for security operations:
 
 ```
 # Rotate the encryption key
-security.rotateKey(newKey="your-new-key")
+#security.rotateKey newKey="your-new-key"
 
 # Migrate unencrypted connections to encrypted format
-security.migrateConnectionsToEncrypted()
+#security.migrateConnectionsToEncrypted
 
 # Generate a secure random key for encryption
-security.generateSecureKey(length=32)
+#security.generateSecureKey length=32
+
+# Verify encryption status of connections
+#security.verifyEncryptionStatus
+
+# Assess connection security
+#security.assessConnectionSecurity
 ```
+
+Each of these commands connects to the functionality in the `SecurityTool.cs` class, which implements the MCP server tools for security operations. These commands follow the standard MCP command syntax with the # prefix.
 
 ### Connection Validation and Security Assessment
 
