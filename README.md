@@ -199,6 +199,47 @@ You can retrieve metadata for both tables and views using the new `GetDatabaseOb
 #GetDatabaseObjectsMetadata connectionName="YourConnection" schema="dbo" includeViews=true
 ```
 
+### Stored Procedure Metadata (New!)
+
+The MCP server now also supports retrieving metadata from SQL Server stored procedures, including procedure definitions and parameters. This allows Copilot to understand and work with stored procedures in your database.
+
+You can retrieve stored procedure metadata using the `GetDatabaseObjectsMetadata` tool with the `objectType` parameter:
+
+```
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=PROCEDURE
+```
+
+This provides detailed procedure metadata including:
+
+- Procedure names and schemas
+- Parameter details (name, type, direction)
+- SQL definition (when not encrypted)
+
+### Filtering Database Objects
+
+You can filter database objects by type using the `objectType` parameter:
+
+```
+# Get only tables
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=TABLE
+
+# Get only views
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=VIEW
+
+# Get only stored procedures
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=PROCEDURE
+
+# Get all database objects
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=ALL
+```
+
+You can also filter by schema:
+
+```
+# Get objects from a specific schema
+#GetDatabaseObjectsMetadata connectionName="YourConnection" schema="dbo" objectType=ALL
+```
+
 You can also filter by specific object types using the objectType parameter:
 
 ```

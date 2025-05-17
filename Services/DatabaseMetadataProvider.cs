@@ -58,6 +58,9 @@ namespace mssqlMCP.Services
                 // Get views
                 await GetViewsAsync(connection, tables, schema, cancellationToken);
 
+                // Get stored procedures
+                await GetStoredProceduresAsync(connection, tables, schema, cancellationToken);
+
                 return tables;
             }
             catch (OperationCanceledException ex)
@@ -382,6 +385,212 @@ namespace mssqlMCP.Services
                     column.IsForeignKey = true;
                     column.ForeignKeyReference = $"{fkInfo.ReferencedSchema}.{fkInfo.ReferencedTable}.{fkInfo.ReferencedColumn}";
                 }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves stored procedure metadata
+        /// </summary>
+        private async Task GetStoredProceduresAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Retrieving stored procedure metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+
+            var procQuery = @"
+                SELECT 
+                    ROUTINE_CATALOG,
+                    ROUTINE_SCHEMA,
+                    ROUTINE_NAME,
+                    ROUTINE_TYPE,
+                    ROUTINE_DEFINITION,
+                    CREATED,
+                    LAST_ALTERED
+                FROM 
+                    INFORMATION_SCHEMA.ROUTINES
+                WHERE 
+                    ROUTINE_TYPE = 'PROCEDURE'
+                    " + (schema != null ? "AND ROUTINE_SCHEMA = @SchemaName" : "") + @"
+                ORDER BY 
+                    ROUTINE_SCHEMA, ROUTINE_NAME";
+
+            using var procCommand = CreateCommandWithTimeout(procQuery, connection);
+            if (schema != null)
+            {
+                procCommand.Parameters.AddWithValue("@SchemaName", schema);
+            }
+            using var procReader = await procCommand.ExecuteReaderAsync(cancellationToken);
+
+            var procNames = new List<(string Schema, string Name)>();
+
+            while (await procReader.ReadAsync(cancellationToken))
+            {
+                var schemaName = procReader["ROUTINE_SCHEMA"].ToString() ?? string.Empty;
+                var name = procReader["ROUTINE_NAME"].ToString() ?? string.Empty;
+                procNames.Add((schemaName, name));
+            }
+            await procReader.CloseAsync();
+
+            foreach (var proc in procNames)
+            {
+                _logger.LogDebug("Processing stored procedure: {Schema}.{Name}", proc.Schema, proc.Name);
+
+                var procInfo = new TableInfo
+                {
+                    Schema = proc.Schema,
+                    Name = proc.Name,
+                    ObjectType = "PROCEDURE",
+                    Columns = new List<ColumnInfo>(),
+                    PrimaryKeys = new List<string>(),
+                    ForeignKeys = new List<ForeignKeyInfo>()
+                };
+
+                // Get the procedure definition
+                await GetProcedureDefinitionAsync(connection, procInfo, cancellationToken);
+
+                // Get the procedure parameters
+                await GetProcedureParametersAsync(connection, procInfo, cancellationToken);
+
+                tables.Add(procInfo);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the SQL definition of a stored procedure
+        /// </summary>
+        private async Task GetProcedureDefinitionAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+        {
+            var definitionQuery = @"
+                SELECT 
+                    r.ROUTINE_DEFINITION
+                FROM 
+                    INFORMATION_SCHEMA.ROUTINES r
+                WHERE 
+                    r.ROUTINE_SCHEMA = @Schema
+                    AND r.ROUTINE_NAME = @ProcName
+                    AND r.ROUTINE_TYPE = 'PROCEDURE'";
+
+            using var command = CreateCommandWithTimeout(definitionQuery, connection);
+            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var definition = reader["ROUTINE_DEFINITION"] != DBNull.Value
+                    ? reader["ROUTINE_DEFINITION"].ToString()
+                    : null;
+
+                if (!string.IsNullOrEmpty(definition))
+                {
+                    // If the definition is NULL or an empty string, the procedure might be using encrypted WITH ENCRYPTION
+                    // or is a system procedure that doesn't expose its definition
+                    procInfo.Definition = definition;
+
+                    _logger.LogDebug("Stored procedure definition for {Schema}.{Name}: {Definition}",
+                        procInfo.Schema, procInfo.Name, definition);
+                }
+                else
+                {
+                    // For procedures where INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL,
+                    // try using sys.sql_modules
+                    await GetProcedureDefinitionFromSysModulesAsync(connection, procInfo, cancellationToken);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the SQL definition from sys.sql_modules when INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL
+        /// </summary>
+        private async Task GetProcedureDefinitionFromSysModulesAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+        {
+            var sysModulesQuery = @"
+                SELECT 
+                    m.definition
+                FROM 
+                    sys.sql_modules m
+                INNER JOIN 
+                    sys.procedures p ON m.object_id = p.object_id
+                INNER JOIN 
+                    sys.schemas s ON p.schema_id = s.schema_id
+                WHERE 
+                    s.name = @Schema
+                    AND p.name = @ProcName";
+
+            using var command = CreateCommandWithTimeout(sysModulesQuery, connection);
+            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var definition = reader["definition"] != DBNull.Value
+                    ? reader["definition"].ToString()
+                    : null;
+
+                if (!string.IsNullOrEmpty(definition))
+                {
+                    procInfo.Definition = definition;
+
+                    _logger.LogDebug("Stored procedure definition (from sys.sql_modules) for {Schema}.{Name}: {Definition}",
+                        procInfo.Schema, procInfo.Name, definition);
+                }
+                else
+                {
+                    _logger.LogWarning("Unable to retrieve definition for stored procedure {Schema}.{Name}. It may be encrypted.",
+                        procInfo.Schema, procInfo.Name);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the parameters of a stored procedure
+        /// </summary>
+        private async Task GetProcedureParametersAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+        {
+            var parametersQuery = @"
+                SELECT 
+                    p.PARAMETER_NAME,
+                    p.DATA_TYPE,
+                    p.PARAMETER_MODE,
+                    p.CHARACTER_MAXIMUM_LENGTH,
+                    p.NUMERIC_PRECISION,
+                    p.NUMERIC_SCALE,
+                    p.IS_RESULT
+                FROM 
+                    INFORMATION_SCHEMA.PARAMETERS p
+                WHERE 
+                    p.SPECIFIC_SCHEMA = @Schema
+                    AND p.SPECIFIC_NAME = @ProcName
+                ORDER BY 
+                    p.ORDINAL_POSITION";
+
+            using var command = CreateCommandWithTimeout(parametersQuery, connection);
+            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                // Store parameters as "columns" for consistency
+                var paramName = reader["PARAMETER_NAME"].ToString() ?? string.Empty;
+                var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
+                var paramMode = reader["PARAMETER_MODE"].ToString() ?? string.Empty;
+
+                var columnInfo = new ColumnInfo
+                {
+                    Name = paramName,
+                    DataType = dataType,
+                    IsNullable = true, // Most parameters allow NULL by default
+                    MaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? Convert.ToInt32(reader["CHARACTER_MAXIMUM_LENGTH"]) : null,
+                    Precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_PRECISION"]) : null,
+                    Scale = reader["NUMERIC_SCALE"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_SCALE"]) : null,
+                    // Add a property to indicate this is a parameter and its direction
+                    Description = $"Parameter, Direction: {paramMode}"
+                };
+
+                procInfo.Columns.Add(columnInfo);
             }
         }
     }

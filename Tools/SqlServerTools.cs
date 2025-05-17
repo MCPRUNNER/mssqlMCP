@@ -312,8 +312,7 @@ namespace mssqlMCP.Tools
                 {
                     var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync(cts.Token, schema);
 
-                    // Filter by object type if specified
-                    if (!string.IsNullOrEmpty(objectType) && objectType.ToUpper() != "ALL")
+                    // Filter by object type if specified                    if (!string.IsNullOrEmpty(objectType) && objectType.ToUpper() != "ALL")
                     {
                         if (objectType.ToUpper() == "TABLE" || objectType.ToUpper() == "TABLES")
                         {
@@ -322,6 +321,10 @@ namespace mssqlMCP.Tools
                         else if (objectType.ToUpper() == "VIEW" || objectType.ToUpper() == "VIEWS")
                         {
                             databaseSchema = databaseSchema.Where(t => t.ObjectType == "VIEW").ToList();
+                        }
+                        else if (objectType.ToUpper() == "PROCEDURE" || objectType.ToUpper() == "PROC" || objectType.ToUpper() == "PROCEDURES")
+                        {
+                            databaseSchema = databaseSchema.Where(t => t.ObjectType == "PROCEDURE").ToList();
                         }
                     }
 
