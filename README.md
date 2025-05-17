@@ -11,6 +11,8 @@ Features include:
 - SQL query execution
 - Database metadata retrieval (tables, views, stored procedures, functions)
 - Detailed schema information including primary/foreign keys
+- Connection string encryption with AES-256
+- Key rotation and security management
 - Echo capabilities for testing
 - Async/await for all database operations
 - Robust logging with Serilog
@@ -69,6 +71,16 @@ dotnet run
 ```
 
 The server will start on http://localhost:3001 by default.
+
+### API Endpoint
+
+The MCP server exposes a JSON-RPC API endpoint at:
+
+```
+http://localhost:3001/
+```
+
+All JSON-RPC requests should be sent to this endpoint as HTTP POST requests with the appropriate method and parameters.
 
 ## Configuration
 
@@ -685,6 +697,64 @@ Error: Invalid object name 'Customers'.
 - Consider adding WHERE clauses to filter data and improve query performance
 - For large databases, query only the columns you need instead of using SELECT \*
 
+## Security
+
+### Connection String Encryption
+
+To enhance security, connection strings are encrypted with AES-256 encryption before being stored in the SQLite database. The encryption key is derived from the environment variable `MSSQL_MCP_KEY`.
+
+To enable secure connection string encryption:
+
+1. Set the `MSSQL_MCP_KEY` environment variable to a strong random value.
+2. Use the provided `Start-MCP-Encrypted.ps1` script to start the server with encryption enabled.
+
+```powershell
+# Set the encryption key (should be a strong random value)
+$env:MSSQL_MCP_KEY = "your-strong-random-key"
+
+# Start the server
+./Start-MCP-Encrypted.ps1
+```
+
+If the `MSSQL_MCP_KEY` environment variable is not set, the server will still function but will use a default insecure key. This is not recommended for production use.
+
+### Security Best Practices
+
+1. Always use encrypted connections when possible (e.g., use `Encrypt=True` in your connection strings)
+2. Use separate SQL accounts with minimal permissions for different applications
+3. Regularly update the `MSSQL_MCP_KEY` environment variable to rotate encryption keys
+4. Do not store the encryption key in plaintext files or source code
+5. Consider using a secrets manager for the encryption key in production environments
+
+### Testing Security Features
+
+To test the security features of the MCP server, you can use the provided test script:
+
+```powershell
+./Test-Security-Features.ps1
+```
+
+This script will:
+
+1. Add a test connection with encryption
+2. List connections to verify encryption
+3. Test migrating unencrypted connections to encrypted format
+4. Optionally test key rotation (requires restarting the server)
+5. Clean up the test connection
+
+For more detailed testing, you can use the individual scripts:
+
+```powershell
+# Start the server with encryption enabled
+./Start-MCP-Encrypted.ps1
+
+# Rotate the encryption key
+./Rotate-Encryption-Key.ps1
+
+# Migrate unencrypted connections to encrypted format
+./Migrate-To-Encrypted.ps1
+```
+
 ## Logs
 
 Logs are stored in the `Logs` directory with daily rolling files. The logging configuration can be customized in the `appsettings.json` file under the `Serilog` section.
@@ -696,3 +766,121 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Security Features
+
+The SQL Server MCP server includes robust security features to protect sensitive information such as connection strings.
+
+### Connection String Encryption
+
+All connection strings stored in the SQLite database are encrypted using AES-256 encryption with the following security measures:
+
+- **AES-256 Encryption**: Industry-standard encryption algorithm
+- **Environment Variable Key**: The encryption key is derived from the `MSSQL_MCP_KEY` environment variable
+- **Unique IV Per Connection**: Each connection string uses a unique Initialization Vector
+- **PBKDF2 Key Derivation**: Key is derived with 10,000 iterations for enhanced security
+
+### Starting with Encryption Enabled
+
+To run the server with encryption enabled, use the provided script:
+
+```powershell
+./Start-MCP-Encrypted.ps1
+```
+
+This script:
+
+1. Generates a random encryption key if one is not provided
+2. Sets the key as an environment variable for the current session
+3. Displays the key for you to save securely
+4. Starts the MCP server
+
+For production environments, you should set the environment variable externally.
+
+### Key Rotation
+
+The server supports rotating the encryption key to comply with security best practices. To rotate the key:
+
+```powershell
+./Rotate-Encryption-Key.ps1
+```
+
+This script:
+
+1. Generates a new random encryption key (or you can provide your own)
+2. Re-encrypts all connection strings using the new key
+3. Displays the new key for you to save
+
+After running the key rotation script, you must restart the server with the new key.
+
+### Migrating Unencrypted Connections
+
+To migrate existing unencrypted connection strings to encrypted format:
+
+```powershell
+./Migrate-To-Encrypted.ps1
+```
+
+This script will encrypt any unencrypted connection strings in the database.
+
+### MCP Security Commands
+
+The following MCP commands are available for security operations:
+
+```
+# Rotate the encryption key
+security.rotateKey(newKey="your-new-key")
+
+# Migrate unencrypted connections to encrypted format
+security.migrateConnectionsToEncrypted()
+
+# Generate a secure random key for encryption
+security.generateSecureKey(length=32)
+```
+
+### Connection Validation and Security Assessment
+
+The SQL Server MCP server includes enhanced security features for validating connections and assessing security status:
+
+#### Connection Validation
+
+When rotating keys or encrypting connections, the system:
+
+- Validates input connections before processing
+- Verifies encryption round-trip to ensure data integrity
+- Tracks and reports any failures during the process
+- Provides detailed logs of operations
+
+#### Security Assessment
+
+Use the included security assessment script to evaluate your connection security:
+
+```powershell
+./Assess-Connection-Security.ps1
+```
+
+This script:
+
+- Analyzes all connections to identify encrypted vs unencrypted connections
+- Reports the encryption status of each connection
+- Checks if the encryption key is properly set
+- Offers to generate a new secure key if needed
+- Provides guidance on securing your connections
+
+#### Enhanced Testing
+
+For comprehensive security testing, use:
+
+```powershell
+./Test-Security-Features.ps1
+```
+
+This enhanced testing script:
+
+- Tests connection creation with encryption
+- Verifies connections work after encryption
+- Tests key rotation with validation
+- Includes connection testing after key rotation
+- Uses proper error handling for API communication
+
+For detailed security information, see the [Security Documentation](./Documentation/Security.md).

@@ -16,8 +16,10 @@ namespace mssqlMCP.Services
     public interface IConnectionRepository
     {
         Task<IEnumerable<ConnectionEntry>> GetAllConnectionsAsync();
+        Task<IEnumerable<ConnectionEntry>> GetAllConnectionsRawAsync();
         Task<ConnectionEntry?> GetConnectionAsync(string name);
         Task SaveConnectionAsync(ConnectionEntry connection);
+        Task SaveConnectionStringDirectlyAsync(ConnectionEntry connection);
         Task DeleteConnectionAsync(string name);
         Task UpdateLastUsedAsync(string name);
     }
@@ -29,12 +31,12 @@ namespace mssqlMCP.Services
     {
         private readonly ILogger<SqliteConnectionRepository> _logger;
         private readonly string _connectionString;
+        private readonly IEncryptionService _encryptionService;
         private bool _initialized = false;
-        private readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);
-
-        public SqliteConnectionRepository(ILogger<SqliteConnectionRepository> logger)
+        private readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1); public SqliteConnectionRepository(ILogger<SqliteConnectionRepository> logger, IEncryptionService encryptionService)
         {
             _logger = logger;
+            _encryptionService = encryptionService;
 
             // Create data directory if it doesn't exist
             var dataDir = Path.Combine(AppContext.BaseDirectory, "Data");
@@ -88,12 +90,41 @@ namespace mssqlMCP.Services
             {
                 _initLock.Release();
             }
+        }        /// <summary>
+                 /// Get all stored database connections
+                 /// </summary>
+        public async Task<IEnumerable<ConnectionEntry>> GetAllConnectionsAsync()
+        {
+            await InitializeAsync();
+
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                var result = await connection.QueryAsync<ConnectionEntry>(@"
+                    SELECT Name, ConnectionString, ServerType, Description, LastUsed, CreatedOn 
+                    FROM Connections
+                    ORDER BY Name;
+                ");
+
+                // Decrypt connection strings
+                foreach (var entry in result)
+                {
+                    entry.ConnectionString = _encryptionService.Decrypt(entry.ConnectionString);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving connections from SQLite");
+                throw;
+            }
         }
 
         /// <summary>
-        /// Get all stored database connections
+        /// Get all stored database connections without decryption
         /// </summary>
-        public async Task<IEnumerable<ConnectionEntry>> GetAllConnectionsAsync()
+        public async Task<IEnumerable<ConnectionEntry>> GetAllConnectionsRawAsync()
         {
             await InitializeAsync();
 
@@ -110,7 +141,7 @@ namespace mssqlMCP.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving connections from SQLite");
+                _logger.LogError(ex, "Error retrieving raw connections from SQLite");
                 throw;
             }
         }
@@ -131,6 +162,12 @@ namespace mssqlMCP.Services
                     WHERE Name = @Name;
                 ", new { Name = name });
 
+                if (result != null)
+                {
+                    // Decrypt the connection string
+                    result.ConnectionString = _encryptionService.Decrypt(result.ConnectionString);
+                }
+
                 return result;
             }
             catch (Exception ex)
@@ -138,12 +175,74 @@ namespace mssqlMCP.Services
                 _logger.LogError(ex, "Error retrieving connection {Name} from SQLite", name);
                 throw;
             }
+        }        /// <summary>
+                 /// Save or update a connection
+                 /// </summary>
+        public async Task SaveConnectionAsync(ConnectionEntry connection)
+        {
+            await InitializeAsync();
+
+            try
+            {
+                // Encrypt the connection string before saving
+                var encryptedConnection = new ConnectionEntry
+                {
+                    Name = connection.Name,
+                    ConnectionString = _encryptionService.Encrypt(connection.ConnectionString),
+                    ServerType = connection.ServerType,
+                    Description = connection.Description,
+                    LastUsed = connection.LastUsed,
+                    CreatedOn = connection.CreatedOn
+                };
+
+                using var dbConnection = new SqliteConnection(_connectionString);
+
+                // Check if connection already exists
+                var existing = await dbConnection.QueryFirstOrDefaultAsync<ConnectionEntry>(
+                    "SELECT Name FROM Connections WHERE Name = @Name",
+                    new
+                    {
+                        connection.Name
+                    });
+
+                if (existing != null)
+                {
+                    // Update existing connection
+                    await dbConnection.ExecuteAsync(@"
+                        UPDATE Connections
+                        SET ConnectionString = @ConnectionString,
+                            ServerType = @ServerType,
+                            Description = @Description,
+                            LastUsed = @LastUsed
+                        WHERE Name = @Name;
+                    ", encryptedConnection);
+
+                    _logger.LogInformation("Updated connection: {Name}", connection.Name);
+                }
+                else
+                {
+                    // Insert new connection
+                    encryptedConnection.CreatedOn = DateTime.UtcNow;
+
+                    await dbConnection.ExecuteAsync(@"
+                        INSERT INTO Connections (Name, ConnectionString, ServerType, Description, LastUsed, CreatedOn)
+                        VALUES (@Name, @ConnectionString, @ServerType, @Description, @LastUsed, @CreatedOn);
+                    ", encryptedConnection);
+
+                    _logger.LogInformation("Added new connection: {Name}", connection.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving connection {Name} to SQLite", connection.Name);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Save or update a connection
+        /// Save connection without encrypting the connection string (used for key rotation)
         /// </summary>
-        public async Task SaveConnectionAsync(ConnectionEntry connection)
+        public async Task SaveConnectionStringDirectlyAsync(ConnectionEntry connection)
         {
             await InitializeAsync();
 
@@ -171,24 +270,27 @@ namespace mssqlMCP.Services
                         WHERE Name = @Name;
                     ", connection);
 
-                    _logger.LogInformation("Updated connection: {Name}", connection.Name);
+                    _logger.LogInformation("Updated connection directly: {Name}", connection.Name);
                 }
                 else
                 {
                     // Insert new connection
-                    connection.CreatedOn = DateTime.UtcNow;
+                    if (connection.CreatedOn == default)
+                    {
+                        connection.CreatedOn = DateTime.UtcNow;
+                    }
 
                     await dbConnection.ExecuteAsync(@"
                         INSERT INTO Connections (Name, ConnectionString, ServerType, Description, LastUsed, CreatedOn)
                         VALUES (@Name, @ConnectionString, @ServerType, @Description, @LastUsed, @CreatedOn);
                     ", connection);
 
-                    _logger.LogInformation("Added new connection: {Name}", connection.Name);
+                    _logger.LogInformation("Added new connection directly: {Name}", connection.Name);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving connection {Name} to SQLite", connection.Name);
+                _logger.LogError(ex, "Error saving connection directly {Name} to SQLite", connection.Name);
                 throw;
             }
         }

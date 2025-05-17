@@ -23,11 +23,18 @@ builder.Host.UseSerilog();
 builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<SqlServerTools>()
-    .WithTools<ConnectionManagerTool>();  // Add our ConnectionManagerTool
+    .WithTools<ConnectionManagerTool>()
+    .WithTools<SecurityTool>();  // Add our SecurityTool
 
 // Add our SQL Server MCP services
 builder.Services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
 builder.Services.AddTransient<ISqlServerTools, SqlServerTools>();
+
+// Add encryption service
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+
+// Add key rotation service
+builder.Services.AddSingleton<IKeyRotationService, KeyRotationService>();
 
 // Add connection repository and manager
 builder.Services.AddSingleton<IConnectionRepository, SqliteConnectionRepository>();
@@ -67,6 +74,27 @@ var app = builder.Build();
 app.UseCors("AllowAll");
 
 app.UseRouting();
+
+// Add custom middleware for handling content type negotiation
+app.Use(async (context, next) =>
+{
+    // Set proper content type headers if not already set
+    var acceptHeader = context.Request.Headers.Accept.ToString();
+    if (string.IsNullOrEmpty(acceptHeader) || !acceptHeader.Contains("application/json"))
+    {
+        context.Request.Headers.Accept = "application/json";
+    }
+
+    // Ensure Content-Type is set for POST requests
+    if (context.Request.Method == "POST" &&
+        (string.IsNullOrEmpty(context.Request.ContentType) ||
+         !context.Request.ContentType.Contains("application/json")))
+    {
+        context.Request.ContentType = "application/json";
+    }
+
+    await next();
+});
 
 app.UseSerilogRequestLogging(options =>
 {
