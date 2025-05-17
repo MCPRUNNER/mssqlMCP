@@ -3,8 +3,11 @@
 Based on the database schema retrieved from `#GetTableMetadata connectionName=PROTO`, I'll provide a comprehensive analysis and visualization of the database structure.
 
 ## Copilot Prompt used to create this
-Recommend making sure you have something like `Markdown Preview Mermaid Support` installed, so you can view the graphs.
-```
+
+Recommend making sure you have something like `Markdown Preview Mermaid Support` installed, so you can view the graphs in vscode. Github nativly supports mermaid graphs.
+
+```copilot
+
 summarize data from #GetTableMetadata connectionName=PROTO and create mermaid graphs for all sql objects discovered
 
 ```

@@ -45,7 +45,7 @@ namespace mssqlMCP.Tools
                 var response = new ListConnectionsResponse
                 {
                     Success = true,
-                    Connections = connections.Select(c => new ConnectionInfo
+                    Connections = connections.Select(c => new mssqlMCP.Models.ConnectionInfo
                     {
                         Name = c.Name,
                         Description = c.Description,
@@ -226,104 +226,6 @@ namespace mssqlMCP.Tools
                     Message = "Failed to remove connection: " + ex.Message
                 };
             }
-        }
-
-        // Helper classes for request/response
-        public class ConnectionInfo
-        {
-            public string Name { get; set; } = string.Empty;
-            public string? Description
-            {
-                get; set;
-            }
-            public string ServerType { get; set; } = string.Empty;
-            public DateTime? LastUsed
-            {
-                get; set;
-            }
-            public DateTime CreatedOn
-            {
-                get; set;
-            }
-        }
-
-        public class ListConnectionsResponse
-        {
-            public bool Success
-            {
-                get; set;
-            }
-            public List<ConnectionInfo> Connections { get; set; } = new List<ConnectionInfo>();
-            public string? ErrorMessage
-            {
-                get; set;
-            }
-        }
-
-        public class TestConnectionRequest
-        {
-            public string ConnectionString { get; set; } = string.Empty;
-        }
-
-        public class TestConnectionResponse
-        {
-            public bool Success
-            {
-                get; set;
-            }
-            public string Message { get; set; } = string.Empty;
-        }
-
-        public class AddConnectionRequest
-        {
-            public string Name { get; set; } = string.Empty;
-            public string ConnectionString { get; set; } = string.Empty;
-            public string? Description
-            {
-                get; set;
-            }
-        }
-
-        public class AddConnectionResponse
-        {
-            public bool Success
-            {
-                get; set;
-            }
-            public string Message { get; set; } = string.Empty;
-        }
-
-        public class UpdateConnectionRequest
-        {
-            public string Name { get; set; } = string.Empty;
-            public string ConnectionString { get; set; } = string.Empty;
-            public string? Description
-            {
-                get; set;
-            }
-        }
-
-        public class UpdateConnectionResponse
-        {
-            public bool Success
-            {
-                get; set;
-            }
-            public string Message { get; set; } = string.Empty;
-        }
-
-        public class RemoveConnectionRequest
-        {
-            public string Name { get; set; } = string.Empty;
-        }
-
-        public class RemoveConnectionResponse
-        {
-            public bool Success
-            {
-                get; set;
-            }
-            public string Message { get; set; } = string.Empty;
-        }
+        }        // All request/response classes moved to separate files in the Models folder
     }
 }

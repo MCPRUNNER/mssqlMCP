@@ -170,6 +170,83 @@ Use the included test script to verify connection management functionality:
 
 This script demonstrates the full lifecycle of connection management including adding, testing, updating, and removing connections.
 
+## Database Metadata Features
+
+This MCP server provides comprehensive metadata retrieval functionality for SQL Server databases, allowing Copilot to understand and work with your database schemas effectively.
+
+### Table Metadata
+
+You can retrieve detailed information about database tables using the `GetTableMetadata` tool:
+
+```
+#GetTableMetadata connectionName="YourConnection" schema="dbo"
+```
+
+This provides complete table metadata including:
+
+- Table names and schemas
+- Column details (name, type, nullability, constraints)
+- Primary keys
+- Foreign key relationships
+
+### View Metadata (New!)
+
+As of May 2025, the MCP server now supports retrieving metadata from SQL Server views in addition to tables. This allows Copilot to understand the structure of views and use them in queries.
+
+You can retrieve metadata for both tables and views using the new `GetDatabaseObjectsMetadata` tool:
+
+```
+#GetDatabaseObjectsMetadata connectionName="YourConnection" schema="dbo" includeViews=true
+```
+
+You can also filter by specific object types using the objectType parameter:
+
+```
+#GetDatabaseObjectsMetadata connectionName="YourConnection" schema="dbo" objectType="VIEW"
+```
+
+Valid objectType values are:
+
+- "TABLE" or "TABLES" - Returns only base tables
+- "VIEW" or "VIEWS" - Returns only views
+- "ALL" (default) - Returns all database objects
+
+The view metadata includes:
+
+- View names and schemas
+- Column details
+- SQL definition of the view
+- Relationships to base tables (where applicable)
+
+By setting `includeViews=false`, you can retrieve only table metadata, similar to the original `GetTableMetadata` tool.
+
+### Example Usage
+
+Here's an example of retrieving both tables and views from a database:
+
+```
+User: Show me all the database objects in my PROTO database, including views
+
+Copilot: I'll retrieve the metadata for all database objects in the PROTO database, including both tables and views.
+
+[Tool used: GetDatabaseObjectsMetadata with connectionName="PROTO" includeViews=true]
+
+Results:
+The PROTO database contains 18 tables and 3 views across multiple schemas:
+
+Tables:
+1. dbo.cross_db_databases - Database information tracking
+2. dbo.cross_db_objects - Object metadata storage
+// ...existing tables...
+
+Views:
+1. dbo.vw_AllReferences - Consolidated view of all cross-database references
+2. dbo.vw_DatabaseObjects - Unified view of all database objects
+3. Reporting.vw_ETLEvents - Combined view of ETL events from multiple sources
+```
+
+A testing script is available in `test-view-metadata.ps1` that demonstrates how to use the new view metadata functionality.
+
 ## Using with VS Code Copilot Agent
 
 1. Configure your Copilot Agent to use this MCP server by referencing the `mcp.json` file
@@ -378,6 +455,7 @@ These examples demonstrate how Copilot can help you explore relationships betwee
 - `initialize`: Initializes the SQL Server connection
 - `executeQuery`: Executes a SQL query and returns results as JSON
 - `getTableMetadata`: Retrieves metadata about database tables, columns, keys, etc. You can filter by schema or get all schemas.
+- `getDatabaseObjectsMetadata`: Retrieves metadata about both tables and views, including schemas, columns, and relationships.
 
 ### Copilot Tool Usage
 
@@ -391,6 +469,11 @@ f1e_ExecuteQuery({
   query: "SELECT TOP 5 * FROM dbo.T",
 });
 f1e_GetTableMetadata({ connectionName: "PROTO", schema: "dbo" });
+f1e_GetDatabaseObjectsMetadata({
+  connectionName: "PROTO",
+  schema: "dbo",
+  includeViews: true,
+});
 ```
 
 You'll typically interact with these tools by asking questions in natural language, and Copilot will handle the function calls automatically.

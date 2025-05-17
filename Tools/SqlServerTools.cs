@@ -207,6 +207,151 @@ namespace mssqlMCP.Tools
                 _logger.LogError(ex, "Error getting table metadata");
                 return "{ \"error\": \"An unexpected error occurred while retrieving table metadata.\" }";
             }
+        }        /// <summary>
+                 /// Gets detailed metadata about database objects including tables and views
+                 /// </summary>
+        [McpServerTool, Description("Gets detailed metadata about database objects including tables and views.")]
+        public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, bool includeViews = true)
+        {
+            _logger.LogInformation("Getting database objects metadata for connection: {ConnectionName}, schema: {Schema}, includeViews: {IncludeViews}",
+                connectionName, schema ?? "all schemas", includeViews);
+
+            // Create a cancellation token source with a reasonable timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120)); // 2 minutes timeout for metadata
+
+            try
+            {
+                // Use the connection manager to get connection details
+                var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+                string connectionString;
+
+                if (connection != null)
+                {
+                    connectionString = connection.ConnectionString;
+                }
+                else
+                {
+                    // Fall back to legacy provider if not found in SQLite
+                    connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+                }
+
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger); try
+                {
+                    var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync(cts.Token, schema);
+
+                    // Filter out views if requested
+                    if (!includeViews)
+                    {
+                        databaseSchema = databaseSchema.Where(t => t.ObjectType == "BASE TABLE").ToList();
+                    }
+
+                    return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Metadata retrieval was canceled or timed out");
+                    return "{ \"error\": \"The metadata retrieval timed out. The database schema might be very large or the server is busy.\" }";
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL error getting database objects metadata");
+
+                // Check for login failure errors (error numbers 4060, 18456, 18452, etc.)
+                if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+                {
+                    // Return a simple message instead of throwing an exception
+                    return "{ \"error\": \"Cannot access database or connection. Authentication failed.\" }";
+                }
+
+                // For other SQL errors, provide generic message
+                return "{ \"error\": \"Database error occurred while retrieving metadata.\" }";
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
+            {
+                _logger.LogError(ex, "Error getting database objects metadata");
+                return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
+            }
+        }
+
+        /// <summary>
+        /// Gets detailed metadata about specific database object types (tables or views)
+        /// </summary>
+        [McpServerTool, Description("Gets detailed metadata about specific database object types.")]
+        public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
+        {
+            _logger.LogInformation("Getting database objects metadata for connection: {ConnectionName}, schema: {Schema}, objectType: {ObjectType}",
+                connectionName, schema ?? "all schemas", objectType);
+
+            // Create a cancellation token source with a reasonable timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120)); // 2 minutes timeout for metadata
+
+            try
+            {
+                // Use the connection manager to get connection details
+                var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+                string connectionString;
+
+                if (connection != null)
+                {
+                    connectionString = connection.ConnectionString;
+                }
+                else
+                {
+                    // Fall back to legacy provider if not found in SQLite
+                    connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+                }
+
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+                var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+
+                try
+                {
+                    var databaseSchema = await metadataProvider.GetDatabaseSchemaAsync(cts.Token, schema);
+
+                    // Filter by object type if specified
+                    if (!string.IsNullOrEmpty(objectType) && objectType.ToUpper() != "ALL")
+                    {
+                        if (objectType.ToUpper() == "TABLE" || objectType.ToUpper() == "TABLES")
+                        {
+                            databaseSchema = databaseSchema.Where(t => t.ObjectType == "BASE TABLE").ToList();
+                        }
+                        else if (objectType.ToUpper() == "VIEW" || objectType.ToUpper() == "VIEWS")
+                        {
+                            databaseSchema = databaseSchema.Where(t => t.ObjectType == "VIEW").ToList();
+                        }
+                    }
+
+                    return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Metadata retrieval was canceled or timed out");
+                    return "{ \"error\": \"The metadata retrieval timed out. The database schema might be very large or the server is busy.\" }";
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL error getting database objects metadata");
+
+                // Check for login failure errors (error numbers 4060, 18456, 18452, etc.)
+                if (sqlEx.Number == 4060 || sqlEx.Number == 18456 || sqlEx.Number == 18452)
+                {
+                    // Return a simple message instead of throwing an exception
+                    return "{ \"error\": \"Cannot access database or connection. Authentication failed.\" }";
+                }
+
+                // For other SQL errors, provide generic message
+                return "{ \"error\": \"Database error occurred while retrieving metadata.\" }";
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException || ex is TimeoutException))
+            {
+                _logger.LogError(ex, "Error getting database objects metadata");
+                return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
+            }
         }
 
         /// <summary>

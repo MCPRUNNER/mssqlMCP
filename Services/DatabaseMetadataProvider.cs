@@ -52,59 +52,11 @@ namespace mssqlMCP.Services
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync(cancellationToken);
 
-                var tableQuery = @"
-                    SELECT 
-                        t.TABLE_CATALOG,
-                        t.TABLE_SCHEMA,
-                        t.TABLE_NAME,
-                        t.TABLE_TYPE
-                    FROM 
-                        INFORMATION_SCHEMA.TABLES t
-                    WHERE 
-                        t.TABLE_TYPE = 'BASE TABLE'
-                        " + (schema != null ? "AND t.TABLE_SCHEMA = @SchemaName" : "") + @"
-                    ORDER BY 
-                        t.TABLE_SCHEMA, t.TABLE_NAME";
+                // Get base tables
+                await GetTablesAsync(connection, tables, schema, cancellationToken);
 
-                using var tableCommand = CreateCommandWithTimeout(tableQuery, connection);
-                if (schema != null)
-                {
-                    tableCommand.Parameters.AddWithValue("@SchemaName", schema);
-                }
-                using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
-
-                var tableNames = new List<(string Schema, string Name)>();
-
-                while (await tableReader.ReadAsync(cancellationToken))
-                {
-                    var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
-                    var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
-                    tableNames.Add((schemaName, name));
-                }
-                await tableReader.CloseAsync();
-
-                foreach (var table in tableNames)
-                {
-                    var tableInfo = new TableInfo
-                    {
-                        Schema = table.Schema,
-                        Name = table.Name,
-                        Columns = new List<ColumnInfo>(),
-                        PrimaryKeys = new List<string>(),
-                        ForeignKeys = new List<ForeignKeyInfo>()
-                    };
-
-                    // Get columns
-                    await GetColumnsAsync(connection, tableInfo, cancellationToken);
-
-                    // Get primary keys
-                    await GetPrimaryKeysAsync(connection, tableInfo, cancellationToken);
-
-                    // Get foreign keys
-                    await GetForeignKeysAsync(connection, tableInfo, cancellationToken);
-
-                    tables.Add(tableInfo);
-                }
+                // Get views
+                await GetViewsAsync(connection, tables, schema, cancellationToken);
 
                 return tables;
             }
@@ -133,6 +85,165 @@ namespace mssqlMCP.Services
             {
                 _logger.LogError(ex, "Error retrieving database schema");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves base table metadata
+        /// </summary>
+        private async Task GetTablesAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+        {
+            var tableQuery = @"
+                SELECT 
+                    t.TABLE_CATALOG,
+                    t.TABLE_SCHEMA,
+                    t.TABLE_NAME,
+                    t.TABLE_TYPE
+                FROM 
+                    INFORMATION_SCHEMA.TABLES t
+                WHERE 
+                    t.TABLE_TYPE = 'BASE TABLE'
+                    " + (schema != null ? "AND t.TABLE_SCHEMA = @SchemaName" : "") + @"
+                ORDER BY 
+                    t.TABLE_SCHEMA, t.TABLE_NAME";
+
+            using var tableCommand = CreateCommandWithTimeout(tableQuery, connection);
+            if (schema != null)
+            {
+                tableCommand.Parameters.AddWithValue("@SchemaName", schema);
+            }
+            using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
+
+            var tableNames = new List<(string Schema, string Name)>();
+
+            while (await tableReader.ReadAsync(cancellationToken))
+            {
+                var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
+                var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
+                tableNames.Add((schemaName, name));
+            }
+            await tableReader.CloseAsync();
+
+            foreach (var table in tableNames)
+            {
+                var tableInfo = new TableInfo
+                {
+                    Schema = table.Schema,
+                    Name = table.Name,
+                    ObjectType = "BASE TABLE",
+                    Columns = new List<ColumnInfo>(),
+                    PrimaryKeys = new List<string>(),
+                    ForeignKeys = new List<ForeignKeyInfo>()
+                };
+
+                // Get columns
+                await GetColumnsAsync(connection, tableInfo, cancellationToken);
+
+                // Get primary keys
+                await GetPrimaryKeysAsync(connection, tableInfo, cancellationToken);
+
+                // Get foreign keys
+                await GetForeignKeysAsync(connection, tableInfo, cancellationToken);
+
+                tables.Add(tableInfo);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves view metadata
+        /// </summary>
+        private async Task GetViewsAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Retrieving view metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+
+            var viewQuery = @"
+                SELECT 
+                    v.TABLE_CATALOG,
+                    v.TABLE_SCHEMA,
+                    v.TABLE_NAME,
+                    v.VIEW_DEFINITION
+                FROM 
+                    INFORMATION_SCHEMA.VIEWS v
+                WHERE 
+                    1=1
+                    " + (schema != null ? "AND v.TABLE_SCHEMA = @SchemaName" : "") + @"
+                ORDER BY 
+                    v.TABLE_SCHEMA, v.TABLE_NAME";
+
+            using var viewCommand = CreateCommandWithTimeout(viewQuery, connection);
+            if (schema != null)
+            {
+                viewCommand.Parameters.AddWithValue("@SchemaName", schema);
+            }
+            using var viewReader = await viewCommand.ExecuteReaderAsync(cancellationToken);
+
+            var viewNames = new List<(string Schema, string Name)>();
+
+            while (await viewReader.ReadAsync(cancellationToken))
+            {
+                var schemaName = viewReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
+                var name = viewReader["TABLE_NAME"].ToString() ?? string.Empty;
+                viewNames.Add((schemaName, name));
+            }
+            await viewReader.CloseAsync();
+
+            foreach (var view in viewNames)
+            {
+                _logger.LogDebug("Processing view: {Schema}.{Name}", view.Schema, view.Name);
+                var viewInfo = new TableInfo
+                {
+                    Schema = view.Schema,
+                    Name = view.Name,
+                    ObjectType = "VIEW",
+                    Columns = new List<ColumnInfo>(),
+                    PrimaryKeys = new List<string>(),
+                    ForeignKeys = new List<ForeignKeyInfo>()
+                };
+
+                // Get columns for the view
+                await GetColumnsAsync(connection, viewInfo, cancellationToken);
+
+                // Views don't have their own primary and foreign keys in the traditional sense
+                // but we can try to identify columns that are keys in the base tables
+
+                // For views, we can also retrieve the view definition/query
+                await GetViewDefinitionAsync(connection, viewInfo, cancellationToken);
+
+                tables.Add(viewInfo);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the SQL definition of a view
+        /// </summary>
+        private async Task GetViewDefinitionAsync(SqlConnection connection, TableInfo viewInfo, CancellationToken cancellationToken = default)
+        {
+            var definitionQuery = @"
+                SELECT 
+                    v.VIEW_DEFINITION
+                FROM 
+                    INFORMATION_SCHEMA.VIEWS v
+                WHERE 
+                    v.TABLE_SCHEMA = @Schema
+                    AND v.TABLE_NAME = @ViewName";
+
+            using var command = CreateCommandWithTimeout(definitionQuery, connection);
+            command.Parameters.AddWithValue("@Schema", viewInfo.Schema);
+            command.Parameters.AddWithValue("@ViewName", viewInfo.Name);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken); if (await reader.ReadAsync(cancellationToken))
+            {
+                var definition = reader["VIEW_DEFINITION"] != DBNull.Value
+                    ? reader["VIEW_DEFINITION"].ToString()
+                    : null;
+                if (!string.IsNullOrEmpty(definition))
+                {
+                    // Store the view definition in the TableInfo object
+                    viewInfo.Definition = definition;
+
+                    _logger.LogDebug("View definition for {Schema}.{Name}: {Definition}",
+                        viewInfo.Schema, viewInfo.Name, definition);
+                }
             }
         }
 
