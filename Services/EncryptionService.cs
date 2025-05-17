@@ -115,7 +115,25 @@ namespace mssqlMCP.Services
             {
                 // Remove the prefix
                 string actualCipherText = cipherText.Substring(_prefix.Length);
-                byte[] cipherBytes = Convert.FromBase64String(actualCipherText);
+
+                // Try to decode the Base64 string
+                byte[] cipherBytes;
+                try
+                {
+                    cipherBytes = Convert.FromBase64String(actualCipherText);
+                }
+                catch (FormatException)
+                {
+                    _logger.LogError("Invalid Base64 format in encrypted text");
+                    return cipherText;
+                }
+
+                // Verify we have enough data for IV
+                if (cipherBytes.Length < 16) // AES block size is 16 bytes
+                {
+                    _logger.LogError("Invalid cipher text format: data is too short to contain IV");
+                    return cipherText;
+                }
 
                 using var aes = Aes.Create();
                 aes.Key = _key;
@@ -125,12 +143,27 @@ namespace mssqlMCP.Services
                 Array.Copy(cipherBytes, 0, iv, 0, iv.Length);
                 aes.IV = iv;
 
-                using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-                using var memoryStream = new MemoryStream(cipherBytes, iv.Length, cipherBytes.Length - iv.Length);
-                using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
-                using var streamReader = new StreamReader(cryptoStream);
+                // Ensure there's actual data to decrypt beyond the IV
+                if (cipherBytes.Length <= iv.Length)
+                {
+                    _logger.LogError("Invalid cipher text format: no data to decrypt after IV");
+                    return cipherText;
+                }
 
-                return streamReader.ReadToEnd();
+                try
+                {
+                    using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                    using var memoryStream = new MemoryStream(cipherBytes, iv.Length, cipherBytes.Length - iv.Length);
+                    using var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+                    using var streamReader = new StreamReader(cryptoStream);
+
+                    return streamReader.ReadToEnd();
+                }
+                catch (CryptographicException ex)
+                {
+                    _logger.LogError(ex, "Cryptographic error during decryption");
+                    return cipherText;
+                }
             }
             catch (Exception ex)
             {

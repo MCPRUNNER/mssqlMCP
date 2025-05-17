@@ -183,12 +183,50 @@ namespace mssqlMCP.Tests.Services
             // Assert
             Assert.NotEqual(plainText, encrypted);
             Assert.Equal(plainText, decrypted);
-        }
-
-        // Clean up after all tests
+        }        // Clean up after all tests
         ~EncryptionServiceTests()
         {
             Environment.SetEnvironmentVariable("MSSQL_MCP_KEY", null);
+        }
+
+        [Fact]
+        public void Decrypt_WithInvalidEncryptedData_ShouldReturnOriginalString()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable("MSSQL_MCP_KEY", "TestEncryptionKey123!");
+            var service = new EncryptionService(_mockLogger.Object);
+
+            // Create an invalid encrypted string (too short to contain proper IV)
+            var invalidEncrypted = "ENC:VGhpc0lzTm90VmFsaWQ="; // This is base64 for "ThisIsNotValid"
+
+            // Act
+            var result = service.Decrypt(invalidEncrypted);
+
+            // Assert
+            // When decryption fails due to invalid data, it should return the original string
+            Assert.Equal(invalidEncrypted, result);
+        }
+
+        [Fact]
+        public void Decrypt_WithCorruptData_ShouldReturnOriginalString()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable("MSSQL_MCP_KEY", "TestEncryptionKey123!");
+            var service = new EncryptionService(_mockLogger.Object);
+
+            // First encrypt some valid data
+            var plainText = "Test string";
+            var encrypted = service.Encrypt(plainText);
+
+            // Now corrupt the data (remove some characters from the base64 part)
+            var corrupted = encrypted.Substring(0, encrypted.Length - 10);
+
+            // Act
+            var result = service.Decrypt(corrupted);
+
+            // Assert
+            // When decryption fails due to corrupt data, it should return the original string
+            Assert.Equal(corrupted, result);
         }
     }
 }
