@@ -8,11 +8,12 @@ The MCP server provides comprehensive metadata retrieval for SQL Server database
 
 ## Supported Database Objects
 
-The metadata system supports three main types of database objects:
+The metadata system supports four main types of database objects:
 
 1. **Tables** - Retrieve information about tables, columns, primary keys, and foreign keys
 2. **Views** - Retrieve information about views, their columns, and SQL definitions
 3. **Stored Procedures** - Retrieve information about procedures, parameters, and SQL definitions
+4. **Functions** - Retrieve information about SQL functions, parameters, return types, and SQL definitions
 
 ## Using Metadata Commands
 
@@ -46,6 +47,14 @@ To retrieve metadata for stored procedures only:
 
 ```
 #GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=PROCEDURE
+```
+
+### Get Functions Only
+
+To retrieve metadata for SQL functions only:
+
+```
+#GetDatabaseObjectsMetadata connectionName="YourConnection" objectType=FUNCTION
 ```
 
 ### Filter by Schema
@@ -106,25 +115,44 @@ For stored procedures, the metadata includes:
   - Description - Contains the parameter direction (IN, OUT, INOUT)
   - MaxLength, Precision, Scale (where applicable)
 
+### Function Metadata
+
+For SQL functions, the metadata includes:
+
+- **Schema** - The database schema name
+- **Name** - The function name
+- **ObjectType** - Always "FUNCTION" for SQL functions
+- **Definition** - The SQL code that defines the function (when not encrypted)
+- **Properties** - Additional function properties:
+  - ReturnType - The data type returned by the function
+  - FunctionType - The type of function (Scalar, Inline Table-valued, or Table-valued)
+- **Columns** - List of parameters with their properties:
+  - Name
+  - DataType
+  - Description - Contains the parameter direction
+  - MaxLength, Precision, Scale (where applicable)
+
 ## Implementation Details
 
 The metadata retrieval system uses SQL Server system catalog views:
 
 - `INFORMATION_SCHEMA.TABLES` for table metadata
 - `INFORMATION_SCHEMA.VIEWS` for view metadata
-- `INFORMATION_SCHEMA.ROUTINES` for stored procedure metadata
+- `INFORMATION_SCHEMA.ROUTINES` for stored procedure and function metadata
 - `INFORMATION_SCHEMA.COLUMNS` for column metadata
-- `INFORMATION_SCHEMA.PARAMETERS` for stored procedure parameters
+- `INFORMATION_SCHEMA.PARAMETERS` for stored procedure and function parameters
 - `sys.foreign_keys` and related tables for foreign key relationships
-- `sys.sql_modules` for additional procedure definitions
+- `sys.sql_modules` for additional procedure and function definitions
+- `sys.objects` for additional object type information
 
 ## Example Test Scripts
 
-Three test scripts are provided to demonstrate metadata retrieval:
+Four test scripts are provided to demonstrate metadata retrieval:
 
 1. **test-view-metadata.ps1** - Demonstrates view metadata retrieval
 2. **test-stored-procedures.ps1** - Demonstrates stored procedure metadata retrieval
-3. **test-connection-manager.ps1** - Demonstrates connection management
+3. **test-function-metadata.ps1** - Demonstrates function metadata retrieval
+4. **test-connection-manager.ps1** - Demonstrates connection management
 
 Run these scripts to see the metadata retrieval in action.
 

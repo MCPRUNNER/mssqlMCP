@@ -18,14 +18,22 @@ public class TableInfo
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Type of object (BASE TABLE, VIEW, etc.)
+    /// Type of object (BASE TABLE, VIEW, PROCEDURE, FUNCTION, etc.)
     /// </summary>
     public string ObjectType { get; set; } = "BASE TABLE";
 
     /// <summary>
-    /// SQL definition for views
+    /// SQL definition for views, procedures, and functions
     /// </summary>
     public string? Definition
+    {
+        get; set;
+    }
+
+    /// <summary>
+    /// Additional properties for specific object types
+    /// </summary>
+    public Dictionary<string, string>? Properties
     {
         get; set;
     }

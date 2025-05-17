@@ -326,6 +326,10 @@ namespace mssqlMCP.Tools
                         {
                             databaseSchema = databaseSchema.Where(t => t.ObjectType == "PROCEDURE").ToList();
                         }
+                        else if (objectType.ToUpper() == "FUNCTION" || objectType.ToUpper() == "FUNC" || objectType.ToUpper() == "FUNCTIONS")
+                        {
+                            databaseSchema = databaseSchema.Where(t => t.ObjectType == "FUNCTION").ToList();
+                        }
                     }
 
                     return JsonSerializer.Serialize(databaseSchema, new JsonSerializerOptions { WriteIndented = true });

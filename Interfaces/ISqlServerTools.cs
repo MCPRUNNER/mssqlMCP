@@ -51,11 +51,11 @@ public interface ISqlServerTools
     /// <param name="includeViews">Whether to include views in the results</param>
     /// <returns>JSON representation of database metadata</returns>
     Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, bool includeViews = true);    /// <summary>
-                                                                                                                                              /// Gets detailed metadata about specific database object types (tables, views, or procedures)
+                                                                                                                                              /// Gets detailed metadata about specific database object types (tables, views, procedures, or functions)
                                                                                                                                               /// </summary>
                                                                                                                                               /// <param name="connectionName">The name of the connection string to use</param>
                                                                                                                                               /// <param name="schema">Optional schema filter</param>
-                                                                                                                                              /// <param name="objectType">Object type filter: "TABLE", "VIEW", "PROCEDURE", or "ALL"</param>
+                                                                                                                                              /// <param name="objectType">Object type filter: "TABLE", "VIEW", "PROCEDURE", "FUNCTION", or "ALL"</param>
                                                                                                                                               /// <returns>JSON representation of database metadata</returns>
     Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL");
 }

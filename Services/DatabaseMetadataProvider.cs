@@ -5,11 +5,10 @@ using mssqlMCP.Models;
 using System.Data;
 
 namespace mssqlMCP.Services
-{
-    /// <summary>
-    /// Service that provides metadata information about SQL Server databases
-    /// </summary>
-    public class DatabaseMetadataProvider : IDatabaseMetadataProvider
+{    /// <summary>
+     /// Service that provides metadata information about SQL Server databases
+     /// </summary>
+    public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
     {
         private readonly string _connectionString;
         private readonly ILogger<DatabaseMetadataProvider> _logger;
@@ -45,9 +44,7 @@ namespace mssqlMCP.Services
         {
             _logger.LogInformation("Retrieving database schema" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
 
-            var tables = new List<TableInfo>();
-
-            try
+            var tables = new List<TableInfo>(); try
             {
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync(cancellationToken);
@@ -61,11 +58,14 @@ namespace mssqlMCP.Services
                 // Get stored procedures
                 await GetStoredProceduresAsync(connection, tables, schema, cancellationToken);
 
+                // Get functions
+                await GetFunctionsAsync(connection, tables, schema, cancellationToken);
+
                 return tables;
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             {
-                _logger.LogWarning(ex, "Database schema retrieval operation was canceled");
+                _logger.LogWarning("Operation to retrieve database schema was canceled");
                 throw; // Let the calling code handle cancellation
             }
             catch (SqlException ex)

@@ -9,7 +9,8 @@ This project implements an MCP server for SQL Server database connectivity, enab
 Features include:
 
 - SQL query execution
-- Database metadata retrieval (tables, columns, primary/foreign keys)
+- Database metadata retrieval (tables, views, stored procedures, functions)
+- Detailed schema information including primary/foreign keys
 - Echo capabilities for testing
 - Async/await for all database operations
 - Robust logging with Serilog
