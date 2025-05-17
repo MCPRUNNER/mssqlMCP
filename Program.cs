@@ -22,11 +22,16 @@ builder.Host.UseSerilog();
 // Add MCP services
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithTools<SqlServerTools>();
+    .WithTools<SqlServerTools>()
+    .WithTools<ConnectionManagerTool>();  // Add our ConnectionManagerTool
 
 // Add our SQL Server MCP services
 builder.Services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
 builder.Services.AddTransient<ISqlServerTools, SqlServerTools>();
+
+// Add connection repository and manager
+builder.Services.AddSingleton<IConnectionRepository, SqliteConnectionRepository>();
+builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
 
 // Add CORS support
 builder.Services.AddCors(options =>
@@ -214,7 +219,6 @@ app.MapMcp();
 
 // Run the application
 app.Lifetime.ApplicationStarted.Register(() => Log.Information("SQL Server MCP Server started"));
-app.Lifetime.ApplicationStopped.Register(() => Log.Information("SQL Server MCP Server stopped"));
 
 app.Run("http://localhost:3001");
 

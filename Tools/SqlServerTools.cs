@@ -17,37 +17,37 @@ namespace mssqlMCP.Tools
     {
         private readonly ILogger<SqlServerTools> _logger;
         private readonly IConnectionStringProvider _connectionStringProvider;
+        private readonly IConnectionManager _connectionManager;
 
         /// <summary>
         /// Initializes a new instance of the SqlServerTools class
         /// </summary>
         /// <param name="logger">Logger for the tools</param>
-        /// <param name="connectionStringProvider">Provider for connection strings</param>
+        /// <param name="connectionStringProvider">Legacy provider for connection strings</param>
+        /// <param name="connectionManager">Manager for database connections</param>
         public SqlServerTools(
             ILogger<SqlServerTools> logger,
-            IConnectionStringProvider connectionStringProvider)
+            IConnectionStringProvider connectionStringProvider,
+            IConnectionManager connectionManager)
         {
             _logger = logger;
             _connectionStringProvider = connectionStringProvider;
-        }
-
-        /// <summary>
-        /// Initialize the SQL Server connection
-        /// </summary>
+            _connectionManager = connectionManager;
+        }        /// <summary>
+                 /// Initialize the SQL Server connection
+                 /// </summary>
         [McpServerTool, Description("Initialize the SQL Server connection.")]
         public async Task<string> Initialize(string connectionName = "DefaultConnection")
         {
             try
             {
-                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
-                using var connection = new SqlConnection(connectionString);
-
                 // Create a cancellation token source with a reasonable timeout
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
                 try
                 {
-                    await connection.OpenAsync(cts.Token);
+                    // Use the connection manager to get a connection
+                    using var connection = await _connectionManager.GetConnectionAsync(connectionName);
                     _logger.LogInformation("Successfully connected to SQL Server database");
                     await connection.CloseAsync();
                     return $"Successfully connected to SQL Server database using connection: {connectionName}";
@@ -95,11 +95,9 @@ namespace mssqlMCP.Tools
         {
             _logger.LogInformation($"F1 Echo received: {message}");
             return message;
-        }
-
-        /// <summary>
-        /// Executes a SQL query and returns the results as JSON
-        /// </summary>
+        }        /// <summary>
+                 /// Executes a SQL query and returns the results as JSON
+                 /// </summary>
         [McpServerTool, Description("Executes a SQL query and returns the results as JSON.")]
         public async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
         {
@@ -110,13 +108,11 @@ namespace mssqlMCP.Tools
 
             try
             {
-                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
-                using var connection = new SqlConnection(connectionString);
+                // Use the connection manager to get a connection
+                using var connection = await _connectionManager.GetConnectionAsync(connectionName);
 
                 try
                 {
-                    await connection.OpenAsync(cts.Token);
-
                     using var command = new SqlCommand(query, connection);
                     command.CommandTimeout = 60; // Set command timeout in seconds
 
@@ -150,11 +146,9 @@ namespace mssqlMCP.Tools
                 _logger.LogError(ex, $"Error executing query: {query}");
                 return "{ \"error\": \"An unexpected error occurred while executing query.\" }";
             }
-        }
-
-        /// <summary>
-        /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
-        /// </summary>
+        }        /// <summary>
+                 /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
+                 /// </summary>
         [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
         public async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
         {
@@ -165,7 +159,20 @@ namespace mssqlMCP.Tools
 
             try
             {
-                var connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+                // Use the connection manager to get connection details
+                var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+                string connectionString;
+
+                if (connection != null)
+                {
+                    connectionString = connection.ConnectionString;
+                }
+                else
+                {
+                    // Fall back to legacy provider if not found in SQLite
+                    connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+                }
+
                 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
                 var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);

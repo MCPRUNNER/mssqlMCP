@@ -78,6 +78,98 @@ Connection strings are stored in `appsettings.json`. The default configuration i
 
 You can modify or add new connection strings as needed.
 
+## Connection Management
+
+This project includes a robust connection management system that allows you to:
+
+1. **Store and manage multiple database connections** using SQLite as a persistent storage backend
+2. **Add, update, and remove connections** programmatically or through the MCP interface
+3. **Test connection strings** before saving them
+4. **Use connections across different tools** with a unified interface
+
+### Connection Storage
+
+Connections are stored in two places:
+
+1. **SQLite database**: Located in the `Data/connections.db` file, providing persistent storage
+2. **JSON file**: Located in the `Data/connections.json` file, providing a human-readable backup
+
+### Connection Management Tools
+
+The project exposes connection management features through:
+
+1. **ConnectionManager class**: For use within the application
+2. **ConnectionManagerTool**: MCP tool for client applications to manage connections
+
+### Using Connection Management
+
+#### Starting with Sample Connections
+
+Run the included script to start the server with sample connections:
+
+```
+./start-mcp-with-connections.ps1
+```
+
+#### Managing Connections through MCP
+
+Use the following MCP commands to manage connections:
+
+- **List connections**:
+
+  ```
+  connectionManager/list
+  ```
+
+- **Add a connection**:
+
+  ```
+  connectionManager/add
+  Params: {
+    "Name": "MyConnection",
+    "ConnectionString": "Server=myserver;Database=mydb;Trusted_Connection=True;",
+    "Description": "Optional description"
+  }
+  ```
+
+- **Update a connection**:
+
+  ```
+  connectionManager/update
+  Params: {
+    "Name": "MyConnection",
+    "ConnectionString": "Updated connection string",
+    "Description": "Updated description"
+  }
+  ```
+
+- **Remove a connection**:
+
+  ```
+  connectionManager/remove
+  Params: {
+    "Name": "MyConnection"
+  }
+  ```
+
+- **Test a connection string**:
+  ```
+  connectionManager/test
+  Params: {
+    "ConnectionString": "Server=myserver;Database=mydb;Trusted_Connection=True;"
+  }
+  ```
+
+#### Testing Connection Management
+
+Use the included test script to verify connection management functionality:
+
+```
+./test-connection-manager.ps1
+```
+
+This script demonstrates the full lifecycle of connection management including adding, testing, updating, and removing connections.
+
 ## Using with VS Code Copilot Agent
 
 1. Configure your Copilot Agent to use this MCP server by referencing the `mcp.json` file
