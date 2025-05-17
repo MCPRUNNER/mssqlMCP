@@ -122,7 +122,7 @@ The project exposes connection management features through:
 Run the included script to start the server with sample connections:
 
 ```powershell
-./start-mcp-with-connections.ps1
+./Scripts/start-mcp-with-connections.ps1
 ```
 
 #### Starting with Encryption Enabled
@@ -130,14 +130,14 @@ Run the included script to start the server with sample connections:
 For enhanced security, use the encryption-enabled starter script:
 
 ```powershell
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 ```
 
 This script automatically generates a cryptographically secure random key using System.Security.Cryptography.RandomNumberGenerator, sets it as an environment variable, and starts the server with encryption enabled. You can also provide your own key:
 
 ```powershell
 $env:MSSQL_MCP_KEY = "your-secure-key"
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 ```
 
 For production environments, you should store the key securely and set the environment variable externally using a secrets management solution.
@@ -196,7 +196,7 @@ Use the following MCP commands to manage connections:
 Use the included test script to verify connection management functionality:
 
 ```
-./test-connection-manager.ps1
+./Scripts/test-connection-manager.ps1
 ```
 
 This script demonstrates the full lifecycle of connection management including adding, testing, updating, and removing connections.
@@ -297,27 +297,27 @@ By setting `includeViews=false`, you can retrieve only table metadata, similar t
 Here's an example of retrieving both tables and views from a database:
 
 ```
-User: Show me all the database objects in my PROTO database, including views
+User: Show me all the database objects in my AdventureWorks2022 database, including views
 
-Copilot: I'll retrieve the metadata for all database objects in the PROTO database, including both tables and views.
+Copilot: I'll retrieve the metadata for all database objects in the AdventureWorks2022 database, including both tables and views.
 
-[Tool used: GetDatabaseObjectsMetadata with connectionName="PROTO" includeViews=true]
+[Tool used: GetDatabaseObjectsMetadata with connectionName="AdventureWorks2022" includeViews=true]
 
 Results:
-The PROTO database contains 18 tables and 3 views across multiple schemas:
+The AdventureWorks2022 database contains 68 tables and 20 views across multiple schemas:
 
 Tables:
-1. dbo.cross_db_databases - Database information tracking
-2. dbo.cross_db_objects - Object metadata storage
+1. Person.Person - Information about customers, employees, and other individuals
+2. Production.Product - Products sold by the company
 // ...existing tables...
 
 Views:
-1. dbo.vw_AllReferences - Consolidated view of all cross-database references
-2. dbo.vw_DatabaseObjects - Unified view of all database objects
-3. Reporting.vw_ETLEvents - Combined view of ETL events from multiple sources
+1. HumanResources.vEmployee - Employee information combining various related tables
+2. Sales.vSalesPerson - Sales person information with their sales data
+3. Person.vAdditionalContactInfo - Additional contact information for individuals
 ```
 
-A testing script is available in `test-view-metadata.ps1` that demonstrates how to use the new view metadata functionality.
+A testing script is available in `Scripts/test-view-metadata.ps1` that demonstrates how to use the new view metadata functionality.
 
 ## Using with VS Code Copilot Agent
 
@@ -333,33 +333,33 @@ A testing script is available in `test-view-metadata.ps1` that demonstrates how 
 You can ask Copilot to retrieve schema information about database tables:
 
 ```
-User: Show me all the tables in my PROTO database
+User: Show me all the tables in my AdventureWorks2022 database
 
-Copilot: I'll retrieve the metadata for all tables in the PROTO database.
+Copilot: I'll retrieve the metadata for all tables in the AdventureWorks2022 database.
 
-[Tool used: GetTableMetadata with connectionName="PROTO"]
+[Tool used: GetTableMetadata with connectionName="AdventureWorks2022"]
 
 Results:
-The PROTO database contains 18 tables across multiple schemas:
+The AdventureWorks2022 database contains 68 tables across multiple schemas:
 
-1. dbo.cross_db_databases - Database information tracking
-2. dbo.cross_db_objects - Object metadata storage
-3. dbo.cross_db_reference - Cross-database reference information
-4. dbo.cross_db_server_databases - Server and database connections
-5. dbo.dtsx_info - SSIS package information
-6. dbo.T - Simple table with various data types
-7. ETL.AnsibleEvents - Ansible event tracking
-8. ETL.KafkaEvents - Kafka event tracking
-9. Holler.ApiConfigurations - API connection settings
-10. Holler.DatasetConfigurations - Dataset query definitions
-11. Holler.ExecutionResults - API execution results
-12. Holler.ExecutionRuns - API execution tracking
-13. SSIS.DTSX_Attributes - SSIS attribute information
-14. SSIS.DTSX_Elements - SSIS element data
-15. SSIS.DTSX_Mapper - SSIS mapping information
-16. SSIS.DTSX_Variables - SSIS variable tracking
-17. SSIS.VarConnect - Connection variables
-18. temp.Department - Department information
+1. Person.Person - Customer and employee information
+2. Production.Product - Product information
+3. Sales.SalesOrderHeader - Sales order headers
+4. Sales.SalesOrderDetail - Sales order line items
+5. Production.ProductInventory - Product inventory levels
+6. HumanResources.Employee - Employee information
+7. Purchasing.PurchaseOrderHeader - Purchase order headers
+8. Purchasing.PurchaseOrderDetail - Purchase order details
+9. Sales.Customer - Customer information
+10. Production.WorkOrder - Manufacturing work orders
+11. Production.BillOfMaterials - Product component structure
+12. Production.ProductReview - Customer reviews of products
+13. Sales.SalesTerritory - Sales territory regions
+14. Sales.SalesPerson - Sales staff information
+15. HumanResources.Department - Company departments
+16. HumanResources.EmployeeDepartmentHistory - Employee department assignments
+17. Person.Address - Customer and employee addresses
+18. Person.StateProvince - State and province information
 ```
 
 #### Using ExecuteQuery in Copilot Chat
@@ -367,48 +367,66 @@ The PROTO database contains 18 tables across multiple schemas:
 You can ask Copilot to run SQL queries against your database:
 
 ```
-User: How many events are in the ETL.KafkaEvents table?
+User: How many products are in the AdventureWorks2022 database?
 
-Copilot: I'll run a query to count the events in the ETL.KafkaEvents table.
+Copilot: I'll run a query to count the products in the AdventureWorks2022 database.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
-Query: SELECT COUNT(*) AS EventCount FROM ETL.KafkaEvents
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
+Query: SELECT COUNT(*) AS ProductCount FROM Production.Product
 
 Results:
 [
   {
-    "EventCount": 143
+    "ProductCount": 504
   }
 ]
 
-There are 143 events stored in the ETL.KafkaEvents table.
+There are 504 products in the AdventureWorks2022 database.
 
-User: Show me the most recent 5 events
+User: Show me the 5 most expensive products
 
-Copilot: I'll retrieve the 5 most recent events from the KafkaEvents table.
+Copilot: I'll retrieve the 5 most expensive products from the Product table.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
-Query: SELECT TOP 5 Id, Topic, [Key], [Timestamp], Partition, Offset FROM ETL.KafkaEvents ORDER BY [Timestamp] DESC
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
+Query: SELECT TOP 5 ProductID, Name, ProductNumber, ListPrice, Color FROM Production.Product ORDER BY ListPrice DESC
 
 Results:
 [
   {
-    "Id": 143,
-    "Topic": "inventory-changes",
-    "Key": "product-5429",
-    "Timestamp": "2025-05-13T14:23:45.000Z",
-    "Partition": 2,
-    "Offset": 8796
+    "ProductID": 749,
+    "Name": "Road-250 Red, 44",
+    "ProductNumber": "BK-R93R-44",
+    "ListPrice": 3578.27,
+    "Color": "Red"
   },
   {
-    "Id": 142,
-    "Topic": "inventory-changes",
-    "Key": "product-1853",
-    "Timestamp": "2025-05-13T14:22:18.000Z",
-    "Partition": 1,
-    "Offset": 7654
+    "ProductID": 750,
+    "Name": "Road-250 Red, 48",
+    "ProductNumber": "BK-R93R-48",
+    "ListPrice": 3578.27,
+    "Color": "Red"
   },
-  ...
+  {
+    "ProductID": 751,
+    "Name": "Road-250 Red, 52",
+    "ProductNumber": "BK-R93R-52",
+    "ListPrice": 3578.27,
+    "Color": "Red"
+  },
+  {
+    "ProductID": 752,
+    "Name": "Road-250 Red, 58",
+    "ProductNumber": "BK-R93R-58",
+    "ListPrice": 3578.27,
+    "Color": "Red"
+  },
+  {
+    "ProductID": 753,
+    "Name": "Road-250 Red, 60",
+    "ProductNumber": "BK-R93R-60",
+    "ListPrice": 3578.27,
+    "Color": "Red"
+  }
 ]
 ```
 
@@ -417,103 +435,125 @@ Results:
 #### Exploring Database Relationships
 
 ```
-User: Show me the relationships between tables in the Holler schema
+User: Show me the relationships between tables in the Sales schema
 
-Copilot: I'll get the foreign key relationships in the Holler schema for you.
+Copilot: I'll get the foreign key relationships in the Sales schema for you.
 
-[Tool used: GetTableMetadata with connectionName="PROTO", schema="Holler"]
+[Tool used: GetTableMetadata with connectionName="AdventureWorks2022", schema="Sales"]
 
 Results:
-I found the following relationships in the Holler schema:
+I found the following relationships in the Sales schema:
 
-1. ExecutionResults.ExecutionId → ExecutionRuns.ExecutionId
-2. ExecutionRuns.ApiConfigurationId → ApiConfigurations.Id
-3. ExecutionRuns.DatasetConfigurationId → DatasetConfigurations.Id
+1. SalesOrderDetail.SalesOrderID → SalesOrderHeader.SalesOrderID
+2. SalesOrderDetail.ProductID → Production.Product.ProductID
+3. SalesOrderHeader.CustomerID → Customer.CustomerID
+4. SalesOrderHeader.SalesPersonID → SalesPerson.BusinessEntityID
+5. SalesOrderHeader.TerritoryID → SalesTerritory.TerritoryID
+6. SalesPerson.TerritoryID → SalesTerritory.TerritoryID
 
 This shows that:
-- ExecutionResults are linked to ExecutionRuns
-- Each ExecutionRun is associated with an ApiConfiguration
-- Each ExecutionRun may optionally be associated with a DatasetConfiguration
+- SalesOrderDetail records are linked to SalesOrderHeader records
+- SalesOrderDetail also references products from the Production schema
+- SalesOrderHeader connects to Customer, SalesPerson, and SalesTerritory
+- SalesPerson is associated with a specific SalesTerritory
 ```
 
 #### Advanced SQL Queries
 
 ```
-User: Find the top 3 most used Topics in the KafkaEvents table with their event counts
+User: Find the top 3 product categories by sales amount in the AdventureWorks2022 database
 
-Copilot: I'll query the KafkaEvents table to find the most frequently used Topics.
+Copilot: I'll query the AdventureWorks2022 database to find the top product categories by sales.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
 Query:
 SELECT TOP 3
-    Topic,
-    COUNT(*) AS EventCount
-FROM ETL.KafkaEvents
-GROUP BY Topic
-ORDER BY EventCount DESC
+    PC.Name AS CategoryName,
+    SUM(SOD.LineTotal) AS SalesAmount
+FROM Production.ProductCategory PC
+JOIN Production.ProductSubcategory PSC ON PC.ProductCategoryID = PSC.ProductCategoryID
+JOIN Production.Product P ON PSC.ProductSubcategoryID = P.ProductSubcategoryID
+JOIN Sales.SalesOrderDetail SOD ON P.ProductID = SOD.ProductID
+GROUP BY PC.Name
+ORDER BY SalesAmount DESC
 
 Results:
 [
   {
-    "Topic": "inventory-changes",
-    "EventCount": 57
+    "CategoryName": "Bikes",
+    "SalesAmount": 28318144.9706
   },
   {
-    "Topic": "user-activity",
-    "EventCount": 42
+    "CategoryName": "Components",
+    "SalesAmount": 1319863.9132
   },
   {
-    "Topic": "order-processing",
-    "EventCount": 28
+    "CategoryName": "Clothing",
+    "SalesAmount": 340253.1788
   }
 ]
 
-The top 3 most used Topics in the KafkaEvents table are:
-1. "inventory-changes" with 57 events
-2. "user-activity" with 42 events
-3. "order-processing" with 28 events
+The top 3 product categories by sales in the AdventureWorks2022 database are:
+1. "Bikes" with $28,318,144.97 in sales
+2. "Components" with $1,319,863.91 in sales
+3. "Clothing" with $340,253.18 in sales
 ```
 
 #### Querying Across Tables
 
 ```
-User: Get the execution details and results for the most recent API call
+User: Get the sales summary for the top 3 sales territories in the most recent year
 
-Copilot: I'll retrieve the most recent API execution along with its results.
+Copilot: I'll retrieve the sales summary for the top territories from the AdventureWorks2022 database.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
 Query:
-SELECT TOP 1
-    er.ExecutionId,
-    er.RunTimestamp,
-    ac.Name AS ApiName,
-    dc.Name AS DatasetName,
-    er.ParallelCount,
-    COUNT(res.ResultId) AS ResultCount,
-    MIN(res.StartTimeUtc) AS FirstCallTime,
-    MAX(res.EndTimeUtc) AS LastCallTime,
-    SUM(CASE WHEN res.StatusCode BETWEEN 200 AND 299 THEN 1 ELSE 0 END) AS SuccessfulCalls,
-    SUM(CASE WHEN res.StatusCode NOT BETWEEN 200 AND 299 THEN 1 ELSE 0 END) AS FailedCalls
-FROM Holler.ExecutionRuns er
-JOIN Holler.ApiConfigurations ac ON er.ApiConfigurationId = ac.Id
-LEFT JOIN Holler.DatasetConfigurations dc ON er.DatasetConfigurationId = dc.Id
-LEFT JOIN Holler.ExecutionResults res ON er.ExecutionId = res.ExecutionId
-GROUP BY er.ExecutionId, er.RunTimestamp, ac.Name, dc.Name, er.ParallelCount
-ORDER BY er.RunTimestamp DESC
+WITH RecentYear AS (
+    SELECT MAX(YEAR(OrderDate)) AS MostRecentYear
+    FROM Sales.SalesOrderHeader
+)
+SELECT TOP 3
+    ST.Name AS Territory,
+    ST.CountryRegionCode AS Country,
+    SUM(SOH.TotalDue) AS TotalSales,
+    COUNT(DISTINCT SOH.CustomerID) AS CustomerCount,
+    COUNT(SOH.SalesOrderID) AS OrderCount,
+    MIN(SOH.OrderDate) AS FirstOrder,
+    MAX(SOH.OrderDate) AS LastOrder
+FROM Sales.SalesTerritory ST
+JOIN Sales.SalesOrderHeader SOH ON ST.TerritoryID = SOH.TerritoryID
+JOIN RecentYear RY ON YEAR(SOH.OrderDate) = RY.MostRecentYear
+GROUP BY ST.Name, ST.CountryRegionCode
+ORDER BY TotalSales DESC
 
 Results:
 [
   {
-    "ExecutionId": "8f7e6d5c-4b3a-2c1d-9e8f-7a6b5c4d3e2f",
-    "RunTimestamp": "2025-05-14T08:45:12.340Z",
-    "ApiName": "InventoryService",
-    "DatasetName": "ProductUpdates",
-    "ParallelCount": 5,
-    "ResultCount": 8,
-    "FirstCallTime": "2025-05-14T08:45:13.450Z",
-    "LastCallTime": "2025-05-14T08:45:19.230Z",
-    "SuccessfulCalls": 7,
-    "FailedCalls": 1
+    "Territory": "North America",
+    "Country": "US",
+    "TotalSales": 3519153.4118,
+    "CustomerCount": 487,
+    "OrderCount": 1573,
+    "FirstOrder": "2014-01-01T00:00:00.000Z",
+    "LastOrder": "2014-12-31T00:00:00.000Z"
+  },
+  {
+    "Territory": "Europe",
+    "Country": "GB",
+    "TotalSales": 2897231.9182,
+    "CustomerCount": 378,
+    "OrderCount": 1041,
+    "FirstOrder": "2014-01-01T00:00:00.000Z",
+    "LastOrder": "2014-12-31T00:00:00.000Z"
+  },
+  {
+    "Territory": "Pacific",
+    "Country": "AU",
+    "TotalSales": 1457240.8527,
+    "CustomerCount": 192,
+    "OrderCount": 531,
+    "FirstOrder": "2014-01-01T00:00:00.000Z",
+    "LastOrder": "2014-12-30T00:00:00.000Z"
   }
 ]
 ```
@@ -537,13 +577,13 @@ When used with GitHub Copilot in Visual Studio Code, the tools are available as 
 // Tool invocation pattern
 f1e_Initialize({ connectionName: "DefaultConnection" });
 f1e_ExecuteQuery({
-  connectionName: "PROTO",
-  query: "SELECT TOP 5 * FROM dbo.T",
+  connectionName: "AdventureWorks2022",
+  query: "SELECT TOP 5 * FROM Production.Product",
 });
-f1e_GetTableMetadata({ connectionName: "PROTO", schema: "dbo" });
+f1e_GetTableMetadata({ connectionName: "AdventureWorks2022", schema: "Sales" });
 f1e_GetDatabaseObjectsMetadata({
-  connectionName: "PROTO",
-  schema: "dbo",
+  connectionName: "AdventureWorks2022",
+  schema: "Person",
   includeViews: true,
 });
 ```
@@ -663,12 +703,12 @@ Error: Connection string 'AdventureWorksLT' was not found in the configuration.
 If your SQL query has syntax errors:
 
 ```
-User: Run this query: SELECT FROM Products WHERE Price < 100
+User: Run this query: SELECT FROM Production.Product WHERE ListPrice < 100
 
 Copilot: I'll execute this query for you.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
-Query: SELECT FROM Products WHERE Price < 100
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
+Query: SELECT FROM Production.Product WHERE ListPrice < 100
 
 Error: Incorrect syntax near the keyword 'FROM'.
 ```
@@ -680,16 +720,16 @@ Error: Incorrect syntax near the keyword 'FROM'.
 When the connection name doesn't match exactly what's in your configuration:
 
 ```
-User: Get tables from PROTO database
+User: Get tables from AdventureWorks database
 
-Copilot: I'll get the tables from the PROTO database.
+Copilot: I'll get the tables from the AdventureWorks database.
 
-[Tool used: GetTableMetadata with connectionName="PROTO"]
+[Tool used: GetTableMetadata with connectionName="AdventureWorks"]
 
-Error: Connection string 'PROTO' was not found in the configuration.
+Error: Connection string 'AdventureWorks' was not found in the configuration.
 ```
 
-**Solution**: Use the exact connection string name as defined in your configuration. In this case, use "PROTO" instead of "PROTO".
+**Solution**: Use the exact connection string name as defined in your configuration. In this case, use "AdventureWorks2022" instead of "AdventureWorks".
 
 ### Table or Schema Not Found
 
@@ -700,13 +740,13 @@ User: Show me data from the Customers table
 
 Copilot: I'll query the Customers table for you.
 
-[Tool used: ExecuteQuery with connectionName="PROTO"]
+[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
 Query: SELECT TOP 10 * FROM Customers
 
 Error: Invalid object name 'Customers'.
 ```
 
-**Solution**: First use GetTableMetadata to see which tables are available, then query the correct table name with the proper schema prefix if needed, e.g., "dbo.Customers".
+**Solution**: First use GetTableMetadata to see which tables are available, then query the correct table name with the proper schema prefix if needed, e.g., "Sales.Customer".
 
 ### Performance Tips
 
@@ -732,10 +772,10 @@ $env:MSSQL_MCP_KEY = "your-strong-random-key"
 dotnet run
 
 # Option 2: Use the automated script that handles key generation and server startup
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 ```
 
-The `Start-MCP-Encrypted.ps1` script:
+The `Scripts/Start-MCP-Encrypted.ps1` script:
 
 1. Checks if the encryption key is already set
 2. Generates a cryptographically secure random key (using System.Security.Cryptography.RandomNumberGenerator) if none exists
@@ -758,7 +798,7 @@ If the `MSSQL_MCP_KEY` environment variable is not set and you don't use the scr
 To test the security features of the MCP server, you can use the provided test script:
 
 ```powershell
-./Test-Security-Features.ps1
+./Scripts/Test-Security-Features.ps1
 ```
 
 This script will:
@@ -773,13 +813,13 @@ For more detailed testing, you can use the individual scripts:
 
 ```powershell
 # Start the server with encryption enabled
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 
 # Rotate the encryption key
-./Rotate-Encryption-Key.ps1
+./Scripts/Rotate-Encryption-Key.ps1
 
 # Migrate unencrypted connections to encrypted format
-./Migrate-To-Encrypted.ps1
+./Scripts/Migrate-To-Encrypted.ps1
 ```
 
 ## Logs
@@ -812,7 +852,7 @@ All connection strings stored in the SQLite database are encrypted using AES-256
 To run the server with encryption enabled, use the provided script:
 
 ```powershell
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 ```
 
 This script:
@@ -826,7 +866,7 @@ You can also provide your own key:
 
 ```powershell
 $env:MSSQL_MCP_KEY = "your-secure-key"
-./Start-MCP-Encrypted.ps1
+./Scripts/Start-MCP-Encrypted.ps1
 ```
 
 For production environments, you should store the key securely and set the environment variable externally using a secrets management solution.
@@ -836,7 +876,7 @@ For production environments, you should store the key securely and set the envir
 The server supports rotating the encryption key to comply with security best practices. To rotate the key:
 
 ```powershell
-./Rotate-Encryption-Key.ps1
+./Scripts/Rotate-Encryption-Key.ps1
 ```
 
 This script:
@@ -852,7 +892,7 @@ After running the key rotation script, you must restart the server with the new 
 To migrate existing unencrypted connection strings to encrypted format:
 
 ```powershell
-./Migrate-To-Encrypted.ps1
+./Scripts/Migrate-To-Encrypted.ps1
 ```
 
 This script will encrypt any unencrypted connection strings in the database.
@@ -898,7 +938,7 @@ When rotating keys or encrypting connections, the system:
 Use the included security assessment script to evaluate your connection security:
 
 ```powershell
-./Assess-Connection-Security.ps1
+./Scripts/Assess-Connection-Security.ps1
 ```
 
 This script:
