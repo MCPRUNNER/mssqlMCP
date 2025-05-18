@@ -82,15 +82,6 @@ http://localhost:3001/
 
 All JSON-RPC requests should be sent to this endpoint as HTTP POST requests with the appropriate method and parameters.
 
-## Configuration
-
-Connection strings are stored in `appsettings.json`. The default configuration includes:
-
-- `DefaultConnection`: Points to the master database
-- `AdventureWorks`: Points to the AdventureWorks sample database
-
-You can modify or add new connection strings as needed.
-
 ## Connection Management
 
 This project includes a robust connection management system that allows you to:
@@ -116,14 +107,6 @@ The project exposes connection management features through:
 3. **Connection Security Tools**: For encrypting and managing connection string security including key rotation and encryption status verification
 
 ### Using Connection Management
-
-#### Starting with Sample Connections
-
-Run the included script to start the server with sample connections:
-
-```powershell
-./Scripts/start-mcp-with-connections.ps1
-```
 
 #### Starting with Encryption Enabled
 
@@ -319,116 +302,55 @@ Views:
 
 A testing script is available in `Scripts/test-view-metadata.ps1` that demonstrates how to use the new view metadata functionality.
 
-## Using with VS Code Copilot Agent
+## Using with GitHub Copilot
 
-1. Configure your Copilot Agent to use this MCP server by referencing the `mcp.json` file
-2. Initialize the connection by calling the `Initialize` method
-3. Execute SQL queries using the `ExecuteQuery` method
-4. Retrieve database metadata with the `GetTableMetadata` method
+This MCP server is designed to work seamlessly with GitHub Copilot in VS Code, allowing you to interact with SQL Server databases using natural language.
 
-### Copilot Chat Examples
+### Setting Up as a Copilot Agent
 
-#### Using GetTableMetadata in Copilot Chat
+1. Start the MCP server using the provided scripts:
 
-You can ask Copilot to retrieve schema information about database tables:
+   ```powershell
+   # Start with encryption and API security enabled (recommended)
+   ./Scripts/Start-MCP-Encrypted-Local.ps1
+   ```
 
-```
-User: Show me all the tables in my AdventureWorks2022 database
+2. Configure Copilot to use this MCP server:
 
-Copilot: I'll retrieve the metadata for all tables in the AdventureWorks2022 database.
+   - Copy the `mcp.json` file to your VS Code workspace's `.vscode` folder
+   - When prompted, enter the API key that was generated during server startup
 
-[Tool used: GetTableMetadata with connectionName="AdventureWorks2022"]
+3. Start asking Copilot about your SQL databases!
 
-Results:
-The AdventureWorks2022 database contains 68 tables across multiple schemas:
+### Example Copilot Interactions
 
-1. Person.Person - Customer and employee information
-2. Production.Product - Product information
-3. Sales.SalesOrderHeader - Sales order headers
-4. Sales.SalesOrderDetail - Sales order line items
-5. Production.ProductInventory - Product inventory levels
-6. HumanResources.Employee - Employee information
-7. Purchasing.PurchaseOrderHeader - Purchase order headers
-8. Purchasing.PurchaseOrderDetail - Purchase order details
-9. Sales.Customer - Customer information
-10. Production.WorkOrder - Manufacturing work orders
-11. Production.BillOfMaterials - Product component structure
-12. Production.ProductReview - Customer reviews of products
-13. Sales.SalesTerritory - Sales territory regions
-14. Sales.SalesPerson - Sales staff information
-15. HumanResources.Department - Company departments
-16. HumanResources.EmployeeDepartmentHistory - Employee department assignments
-17. Person.Address - Customer and employee addresses
-18. Person.StateProvince - State and province information
-```
+You can ask Copilot questions like:
 
-#### Using ExecuteQuery in Copilot Chat
+- "What tables are in my AdventureWorks database?"
+- "Show me the schema of the Sales.Customer table"
+- "Write a query to find the top 5 customers by total sales"
+- "What are the foreign key relationships in the Sales schema?"
 
-You can ask Copilot to run SQL queries against your database:
+Behind the scenes, Copilot will use the MCP tools to:
 
-```
-User: How many products are in the AdventureWorks2022 database?
+1. Initialize connection to the database
+2. Retrieve metadata about tables and schemas
+3. Execute SQL queries based on your questions
+4. Format and present the results
 
-Copilot: I'll run a query to count the products in the AdventureWorks2022 database.
+For detailed instructions, see the [Copilot Agent Guide](./CopilotAgent.md).
 
-[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
-Query: SELECT COUNT(*) AS ProductCount FROM Production.Product
+### MCP Tools for Copilot
 
-Results:
-[
-  {
-    "ProductCount": 504
-  }
-]
+The following MCP tools are available for Copilot:
 
-There are 504 products in the AdventureWorks2022 database.
+1. **initialize**: Set up the database connection
+2. **executeQuery**: Run SQL queries against your database
+3. **getTableMetadata**: Get metadata about database tables
+4. **getDatabaseObjectsMetadata**: Get metadata about tables, views, and stored procedures
+5. **connectionManager/...**: Manage database connections
 
-User: Show me the 5 most expensive products
-
-Copilot: I'll retrieve the 5 most expensive products from the Product table.
-
-[Tool used: ExecuteQuery with connectionName="AdventureWorks2022"]
-Query: SELECT TOP 5 ProductID, Name, ProductNumber, ListPrice, Color FROM Production.Product ORDER BY ListPrice DESC
-
-Results:
-[
-  {
-    "ProductID": 749,
-    "Name": "Road-250 Red, 44",
-    "ProductNumber": "BK-R93R-44",
-    "ListPrice": 3578.27,
-    "Color": "Red"
-  },
-  {
-    "ProductID": 750,
-    "Name": "Road-250 Red, 48",
-    "ProductNumber": "BK-R93R-48",
-    "ListPrice": 3578.27,
-    "Color": "Red"
-  },
-  {
-    "ProductID": 751,
-    "Name": "Road-250 Red, 52",
-    "ProductNumber": "BK-R93R-52",
-    "ListPrice": 3578.27,
-    "Color": "Red"
-  },
-  {
-    "ProductID": 752,
-    "Name": "Road-250 Red, 58",
-    "ProductNumber": "BK-R93R-58",
-    "ListPrice": 3578.27,
-    "Color": "Red"
-  },
-  {
-    "ProductID": 753,
-    "Name": "Road-250 Red, 60",
-    "ProductNumber": "BK-R93R-60",
-    "ListPrice": 3578.27,
-    "Color": "Red"
-  }
-]
-```
+See the [full documentation](./Documentation/EXAMPLE_USAGE.md) for examples and detailed usage information.
 
 ### Advanced Copilot Chat Examples
 
@@ -793,21 +715,7 @@ If the `MSSQL_MCP_KEY` environment variable is not set and you don't use the scr
 4. Do not store the encryption key in plaintext files or source code
 5. Consider using a secrets manager for the encryption key in production environments
 
-### Testing Security Features
-
-To test the security features of the MCP server, you can use the provided test script:
-
-```powershell
-./Scripts/Test-Security-Features.ps1
-```
-
-This script will:
-
-1. Add a test connection with encryption
-2. List connections to verify encryption
-3. Test migrating unencrypted connections to encrypted format
-4. Optionally test key rotation (requires restarting the server)
-5. Clean up the test connection
+### Starting
 
 For more detailed testing, you can use the individual scripts:
 
@@ -980,3 +888,49 @@ The MCP server now supports API key authentication to secure the API endpoint. W
 ```powershell
 ./Scripts/Set-Api-Key.ps1
 ```
+
+This script will:
+
+- Generate a cryptographically secure random API key
+- Set it as the environment variable `MSSQL_MCP_API_KEY` for the current session
+- Display usage examples for making authenticated API calls
+
+#### API Key Configuration
+
+The API key can be configured in different ways:
+
+1. **Environment Variable**: Set `MSSQL_MCP_API_KEY` environment variable
+
+   ```powershell
+   $env:MSSQL_MCP_API_KEY = "your-secure-api-key"
+   ```
+
+2. **Application Settings**: Configure in `appsettings.json` under the ApiSecurity section:
+   ```json
+   "ApiSecurity": {
+     "HeaderName": "X-API-Key",
+     "ApiKey": "your-secure-api-key"
+   }
+   ```
+
+#### Making Authenticated Requests
+
+When API key authentication is enabled, all HTTP requests to the server must include the API key in the headers:
+
+```powershell
+# PowerShell example
+Invoke-RestMethod -Uri "http://localhost:3001/" -Method Post `
+  -Headers @{"X-API-Key" = "your-api-key"; "Content-Type" = "application/json"} `
+  -Body '{"jsonrpc": "2.0", "id": 1, "method": "echo", "params": {"message": "Hello"}}'
+
+# curl example
+curl -X POST http://localhost:3001/ -H "X-API-Key: your-api-key" -H "Content-Type: application/json" `
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "echo", "params": {"message": "Hello"}}'
+```
+
+#### Security Considerations
+
+- Store the API key securely and do not expose it in client-side code
+- Rotate API keys periodically for enhanced security
+- Use HTTPS in production environments when exposing the API
+- For high-security environments, consider implementing additional authentication methods
