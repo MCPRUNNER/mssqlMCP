@@ -966,3 +966,17 @@ This enhanced testing script:
 - Uses proper error handling for API communication
 
 For detailed security information, see the [Security Documentation](./Documentation/Security.md).
+
+## API Security
+
+### API Key Authentication
+
+The MCP server now supports API key authentication to secure the API endpoint. When enabled, all requests must include a valid API key in the HTTP headers.
+
+#### Setting Up API Key Authentication
+
+1. Generate and set an API key using the provided script:
+
+```powershell
+./Scripts/Set-Api-Key.ps1
+```

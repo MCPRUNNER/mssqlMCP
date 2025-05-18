@@ -69,3 +69,5 @@ bld/
 
 # Logs
 logs/
+
+Scripts\Start-MCP-Encrypted-Local.ps1

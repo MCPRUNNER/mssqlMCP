@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using mssqlMCP.Configuration;
+using mssqlMCP.Extensions;
 using mssqlMCP.Interfaces;
 using mssqlMCP.Services;
 using mssqlMCP.Tools;
@@ -74,6 +75,9 @@ var app = builder.Build();
 app.UseCors("AllowAll");
 
 app.UseRouting();
+
+// Add this in the appropriate location after app.UseRouting()
+app.UseApiKeyAuthentication();
 
 // Add custom middleware for handling content type negotiation
 app.Use(async (context, next) =>
