@@ -26,6 +26,10 @@ Features include:
 
 - .NET 9.0 SDK
 
+### TL;DR The Quick Setup Doc
+
+[QUICK_INSTALL](./Documentation/QUICK_INSTALL.md)
+
 ## Project Architecture
 
 This project follows a clean architecture approach with separation of concerns:

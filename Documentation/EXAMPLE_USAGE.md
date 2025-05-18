@@ -1,5 +1,3 @@
-I'll analyze the database schema from the AdventureWorks2022 database and create a comprehensive documentation replacing the current EXAMPLE_USAGE.md file.
-
 # SQL Database Schema Analysis and Visualization
 
 Based on the database schema retrieved from `#GetDatabaseObjectsMetadata connectionName=P330_AdventureWorks2022`, this document provides a comprehensive analysis and visualization of the AdventureWorks2022 database structure.
