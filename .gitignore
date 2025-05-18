@@ -14,8 +14,14 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-# Visual Studio files
+# Visual Studio / VS Code files
 .vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
 *_i.c
 *_p.c
 *_h.h
@@ -44,11 +50,22 @@ bld/
 *.pidb
 *.svclog
 *.scc
+*.user
+*.userosscache
+*.suo
+*.userprefs
 
 # NuGet Packages
 *.nupkg
 # NuGet Symbol Packages
 *.snupkg
+# The packages folder can be ignored because of Package Restore
+**/packages/*
+# except build/, which is used as an MSBuild target
+!**/packages/build/
+# NuGet v3's project.json files produces more ignorable files
+*.nuget.props
+*.nuget.targets
 # The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
@@ -70,4 +87,53 @@ bld/
 # Logs
 logs/
 
-Scripts\Start-MCP-Encrypted-Local.ps1
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# User-specific files for database connections
+Data/connections.db
+Data/user-connections.json
+
+# Sensitive data files
+*.key
+**/appsettings.*.json
+!**/appsettings.Development.json
+
+# Environment files
+.env
+.env.local
+
+# MCP specific files
+# Don't ignore the example mcp.json in the root
+!mcp.json
+
+# Backup & temp files
+*.bak
+*.swp
+*~
+*.backup
+[Tt]emp/
+[Tt]mp/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUNIT
+*.VisualState.xml
+TestResult.xml
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+Scripts/Start-MCP-Encrypted-Local.ps1
