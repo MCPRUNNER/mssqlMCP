@@ -30,6 +30,8 @@ Features include:
 
 This project follows a clean architecture approach with separation of concerns:
 
+See the [full architecural documentation](./Documentation/Architecture.md) for diagrams and detailed process flow.
+
 ### Folders Structure
 
 - **Models**: Contains entity models for database metadata (TableInfo, ColumnInfo, ForeignKeyInfo)
@@ -119,7 +121,8 @@ For enhanced security, use the encryption-enabled starter script:
 This script automatically generates a cryptographically secure random key using System.Security.Cryptography.RandomNumberGenerator, sets it as an environment variable, and starts the server with encryption enabled. You can also provide your own key:
 
 ```powershell
-$env:MSSQL_MCP_KEY = "your-secure-key"
+   $env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+   $env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Start-MCP-Encrypted.ps1
 ```
 
@@ -308,11 +311,13 @@ This MCP server is designed to work seamlessly with GitHub Copilot in VS Code, a
 
 ### Setting Up as a Copilot Agent
 
-1. Start the MCP server using the provided scripts:
+1. Start the MCP server using the provided script:
 
    ```powershell
    # Start with encryption and API security enabled (recommended)
-   ./Scripts/Start-MCP-Encrypted-Local.ps1
+   $env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+   $env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
+   ./Scripts/Start-MCP-Encrypted.ps1
    ```
 
 2. Configure Copilot to use this MCP server:
@@ -489,7 +494,7 @@ These examples demonstrate how Copilot can help you explore relationships betwee
 - `initialize`: Initializes the SQL Server connection
 - `executeQuery`: Executes a SQL query and returns results as JSON
 - `getTableMetadata`: Retrieves metadata about database tables, columns, keys, etc. You can filter by schema or get all schemas.
-- `getDatabaseObjectsMetadata`: Retrieves metadata about both tables and views, including schemas, columns, and relationships.
+- `getDatabaseObjectsMetadata`: Retrieves metadata about tables, views, stored procedures and functions, including schemas, columns, and relationships.
 
 ### Copilot Tool Usage
 
@@ -690,10 +695,13 @@ To enable secure connection string encryption:
 
 ```powershell
 # Option 1: Set the encryption key manually (should be a strong random value)
-$env:MSSQL_MCP_KEY = "your-strong-random-key"
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 dotnet run
 
 # Option 2: Use the automated script that handles key generation and server startup
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Start-MCP-Encrypted.ps1
 ```
 
@@ -721,12 +729,16 @@ For more detailed testing, you can use the individual scripts:
 
 ```powershell
 # Start the server with encryption enabled
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Start-MCP-Encrypted.ps1
 
 # Rotate the encryption key
 ./Scripts/Rotate-Encryption-Key.ps1
 
 # Migrate unencrypted connections to encrypted format
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Migrate-To-Encrypted.ps1
 ```
 
@@ -760,6 +772,8 @@ All connection strings stored in the SQLite database are encrypted using AES-256
 To run the server with encryption enabled, use the provided script:
 
 ```powershell
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Start-MCP-Encrypted.ps1
 ```
 
@@ -773,7 +787,8 @@ This script:
 You can also provide your own key:
 
 ```powershell
-$env:MSSQL_MCP_KEY = "your-secure-key"
+$env:MSSQL_MCP_KEY = "ReplaceWithMyKeyForTheConnectionEncryption"
+$env:MSSQL_MCP_API_KEY = "ReplaceWithMyApiKeyForClientAccess"
 ./Scripts/Start-MCP-Encrypted.ps1
 ```
 
