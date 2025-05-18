@@ -6,14 +6,12 @@ This document provides instructions for setting up and using the SQL Server MCP 
 
 ### 1. Start the MCP Server
 
-You can start the MCP server using one of the provided scripts:
+You can start the MCP server using the provided script:
 
 ```powershell
 # Start with encryption enabled (recommended)
 ./Scripts/Start-MCP-Encrypted.ps1
 
-# OR with API security enabled
-./Scripts/Start-MCP-Encrypted-Local.ps1
 ```
 
 ### 2. Setup API Authentication

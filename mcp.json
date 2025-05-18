@@ -1,191 +1,23 @@
 {
-  "servers": {
-    "sql-server-mcp": {
-      "url": "http://localhost:3001",
-      "headers": {
-        "X-API-Key": "${env:MSSQL_MCP_API_KEY}"
-      }
-    }
-  },
-  "tools": [
-    {
-      "name": "mssql",
-      "server": "sql-server-mcp",
-      "actions": [
+   "inputs":[
         {
-          "name": "initialize",
-          "description": "Initialize the SQL Server connection",
-          "parameters": [
-            {
-              "name": "connectionName",
-              "type": "string",
-              "description": "Name of the connection to use",
-              "required": false
+            "id": "mssql-server-mcp-api-key",
+            "type": "promptString",
+            "description": "Enter your SQL Server MCP API Key",
+            "password": true        }
+   ],
+   "servers": {
+        "sql-server-mcp-example1": {
+            "url": "http://localhost:3001",
+            "headers": {
+                "X-API-Key": "${input:mssql-server-mcp-api-key}"    
             }
-          ]
         },
-        {
-          "name": "executeQuery",
-          "description": "Execute SQL query against the database",
-          "parameters": [
-            {
-              "name": "connectionName",
-              "type": "string",
-              "description": "Name of the connection to use",
-              "required": true
-            },
-            {
-              "name": "query",
-              "type": "string",
-              "description": "SQL query to execute",
-              "required": true
-            },
-            {
-              "name": "parameters",
-              "type": "object",
-              "description": "Query parameters (for parameterized queries)",
-              "required": false
+        "sql-server-mcp-example2": {
+            "url": "http://localhost:3001",
+            "headers": {
+                "X-API-Key": "${env:MSSQL_MCP_API_KEY}"
             }
-          ]
-        },
-        {
-          "name": "getTableMetadata",
-          "description": "Retrieve metadata about database tables",
-          "parameters": [
-            {
-              "name": "connectionName",
-              "type": "string",
-              "description": "Name of the connection to use",
-              "required": true
-            },
-            {
-              "name": "schema",
-              "type": "string",
-              "description": "Database schema to retrieve metadata for",
-              "required": false
-            }
-          ]
-        },
-        {
-          "name": "getDatabaseObjectsMetadata",
-          "description": "Retrieve metadata about database objects (tables, views, procedures)",
-          "parameters": [
-            {
-              "name": "connectionName",
-              "type": "string",
-              "description": "Name of the connection to use",
-              "required": true
-            },
-            {
-              "name": "schema",
-              "type": "string",
-              "description": "Database schema to retrieve metadata for",
-              "required": false
-            },
-            {
-              "name": "objectType",
-              "type": "string",
-              "description": "Type of objects to retrieve (TABLE, VIEW, PROCEDURE, ALL)",
-              "required": false
-            },
-            {
-              "name": "includeViews",
-              "type": "boolean",
-              "description": "Whether to include views in the results",
-              "required": false
-            }
-          ]
-        },
-        {
-          "name": "connectionManager/list",
-          "description": "List all saved database connections",
-          "parameters": []
-        },
-        {
-          "name": "connectionManager/add",
-          "description": "Add a new database connection",
-          "parameters": [
-            {
-              "name": "Name",
-              "type": "string",
-              "description": "Name of the connection",
-              "required": true
-            },
-            {
-              "name": "ConnectionString",
-              "type": "string",
-              "description": "Connection string for the database",
-              "required": true
-            },
-            {
-              "name": "Description",
-              "type": "string",
-              "description": "Optional description of the connection",
-              "required": false
-            }
-          ]
-        },
-        {
-          "name": "connectionManager/update",
-          "description": "Update an existing database connection",
-          "parameters": [
-            {
-              "name": "Name",
-              "type": "string",
-              "description": "Name of the connection to update",
-              "required": true
-            },
-            {
-              "name": "ConnectionString",
-              "type": "string",
-              "description": "New connection string",
-              "required": false
-            },
-            {
-              "name": "Description",
-              "type": "string",
-              "description": "New description",
-              "required": false
-            }
-          ]
-        },
-        {
-          "name": "connectionManager/remove",
-          "description": "Remove a database connection",
-          "parameters": [
-            {
-              "name": "Name",
-              "type": "string",
-              "description": "Name of the connection to remove",
-              "required": true
-            }
-          ]
-        },
-        {
-          "name": "security/rotateKey",
-          "description": "Rotate the encryption key for connection strings",
-          "parameters": [
-            {
-              "name": "newKey",
-              "type": "string",
-              "description": "New encryption key",
-              "required": true
-            }
-          ]
-        },
-        {
-          "name": "security/generateSecureKey",
-          "description": "Generate a secure random key for encryption",
-          "parameters": [
-            {
-              "name": "length",
-              "type": "number",
-              "description": "Length of the key in bytes",
-              "required": false
-            }
-          ]
         }
-      ]
     }
-  ]
 }
