@@ -1,6 +1,6 @@
 # SQL Server MCP (Model Context Protocol) Server
 
-This is a Model Context Protocol (MCP) server that connects to SQL Server databases, designed to be used by Visual Studio Code as a Copilot Agent.
+This is a Model Context Protocol (MCP) server that connects to one or more SQL Server databases; designed to be used by Visual Studio Code as a Copilot Agent.
 
 ## Overview
 
@@ -54,39 +54,9 @@ See the [full architecural documentation](./Documentation/Architecture.md) for d
 - SQL Server instance (local or remote)
 - Visual Studio Code with Copilot extension
 
-### Installation
+### Installation and Setup
 
-1. Clone this repository
-2. Navigate to the project directory
-3. Restore NuGet packages:
-   ```
-   dotnet restore
-   ```
-4. Build the project:
-   ```
-   dotnet build
-   ```
-5. Update connection strings in `appsettings.json` to match your SQL Server environment
-
-### Running the Server
-
-Start the MCP server with:
-
-```
-dotnet run
-```
-
-The server will start on http://localhost:3001 by default.
-
-### API Endpoint
-
-The MCP server exposes a JSON-RPC API endpoint at:
-
-```
-http://localhost:3001/
-```
-
-All JSON-RPC requests should be sent to this endpoint as HTTP POST requests with the appropriate method and parameters.
+See [QUICK_INSTALL](./Documentation/QUICK_INSTALL.md)
 
 ## Connection Management
 
@@ -99,10 +69,9 @@ This project includes a robust connection management system that allows you to:
 
 ### Connection Storage
 
-Connections are stored in two places:
+Connections are stored in a Sqlite database:
 
-1. **SQLite database**: Located in the `Data/connections.db` file, providing persistent storage
-2. **JSON file**: Located in the `Data/connections.json` file, providing a human-readable backup
+- **SQLite database**: Located in the `Data/connections.db` file, providing persistent storage
 
 ### Connection Management Tools
 
@@ -116,11 +85,7 @@ The project exposes connection management features through:
 
 #### Starting with Encryption Enabled
 
-For enhanced security, use the encryption-enabled starter script:
-
-```powershell
-./Scripts/Start-MCP-Encrypted.ps1
-```
+See [QUICK_INSTALL](./Documentation/QUICK_INSTALL.md)
 
 This script automatically generates a cryptographically secure random key using System.Security.Cryptography.RandomNumberGenerator, sets it as an environment variable, and starts the server with encryption enabled. You can also provide your own key:
 
@@ -326,7 +291,7 @@ This MCP server is designed to work seamlessly with GitHub Copilot in VS Code, a
 
 2. Configure Copilot to use this MCP server:
 
-   - Copy the `mcp.json` file to your VS Code workspace's `.vscode` folder
+   - Copy the [Scripts\mcp.json](/Scripts/mcp.json) file to your VS Code workspace's `.vscode` folder
    - When prompted, enter the API key that was generated during server startup
 
 3. Start asking Copilot about your SQL databases!
@@ -627,7 +592,7 @@ Copilot: I'll try to retrieve the metadata from the AdventureWorksLT database.
 Error: Connection string 'AdventureWorksLT' was not found in the configuration.
 ```
 
-**Solution**: Make sure the connection string is properly defined in your `appsettings.json` file.
+**Solution**: Make sure the connection string is properly defined via `#ListConnections`.
 
 ### Query Syntax Errors
 
