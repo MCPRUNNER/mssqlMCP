@@ -4,7 +4,8 @@
             "id": "mssql-server-mcp-api-key",
             "type": "promptString",
             "description": "Enter your SQL Server MCP API Key",
-            "password": true        }
+            "password": true        
+        }
    ],
    "servers": {
         "sql-server-mcp": {

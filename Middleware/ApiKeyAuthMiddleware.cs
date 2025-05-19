@@ -24,9 +24,10 @@ public class ApiKeyAuthMiddleware
         _next = next;
         _logger = logger;
         _apiKeyHeaderName = configuration["ApiSecurity:HeaderName"] ?? "X-API-Key";
-        _apiKey = configuration["ApiSecurity:ApiKey"] ?? 
-                  Environment.GetEnvironmentVariable("MSSQL_MCP_API_KEY") ?? 
-                  "";
+        _apiKey = Environment.GetEnvironmentVariable("MSSQL_MCP_API_KEY") ??
+            configuration["ApiSecurity:ApiKey"] ??
+            "";
+
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -34,6 +35,7 @@ public class ApiKeyAuthMiddleware
         // Skip auth check if API key is not configured
         if (string.IsNullOrEmpty(_apiKey))
         {
+            System.Console.WriteLine(@$"API key authentication is disabled. No API key configured MSSQL_MCP_API_KEY =  {Environment.GetEnvironmentVariable("MSSQL_MCP_API_KEY")}.");
             _logger.LogWarning("API key authentication is disabled. No API key configured.");
             await _next(context);
             return;
@@ -44,7 +46,7 @@ public class ApiKeyAuthMiddleware
         {
             _logger.LogWarning("API key missing in request");
             context.Response.StatusCode = 401; // Unauthorized
-            await context.Response.WriteAsJsonAsync(new 
+            await context.Response.WriteAsJsonAsync(new
             {
                 error = "API key required",
                 message = "Missing required API key header"
@@ -57,7 +59,7 @@ public class ApiKeyAuthMiddleware
         {
             _logger.LogWarning("Invalid API key provided");
             context.Response.StatusCode = 403; // Forbidden
-            await context.Response.WriteAsJsonAsync(new 
+            await context.Response.WriteAsJsonAsync(new
             {
                 error = "Access denied",
                 message = "Invalid API key"
