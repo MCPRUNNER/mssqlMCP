@@ -4,99 +4,99 @@ using mssqlMCP.Interfaces;
 using mssqlMCP.Models;
 using System.Data;
 
-namespace mssqlMCP.Services
-{    /// <summary>
-     /// Service that provides metadata information about SQL Server databases
-     /// </summary>
-    public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
+namespace mssqlMCP.Services;
+/// <summary>
+ /// Service that provides metadata information about SQL Server databases
+ /// </summary>
+public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
+{
+    private readonly string _connectionString;
+    private readonly ILogger<DatabaseMetadataProvider> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the DatabaseMetadataProvider with connection string and logger
+    /// </summary>
+    /// <param name="connectionString">Database connection string</param>
+    /// <param name="logger">Logger for the provider</param>
+    public DatabaseMetadataProvider(string connectionString, ILogger<DatabaseMetadataProvider> logger)
     {
-        private readonly string _connectionString;
-        private readonly ILogger<DatabaseMetadataProvider> _logger;
+        _connectionString = connectionString;
+        _logger = logger;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the DatabaseMetadataProvider with connection string and logger
-        /// </summary>
-        /// <param name="connectionString">Database connection string</param>
-        /// <param name="logger">Logger for the provider</param>
-        public DatabaseMetadataProvider(string connectionString, ILogger<DatabaseMetadataProvider> logger)
+    /// <summary>
+    /// Helper method to create SQL command with timeout
+    /// </summary>
+    private SqlCommand CreateCommandWithTimeout(string commandText, SqlConnection connection)
+    {
+        var command = new SqlCommand(commandText, connection);
+        command.CommandTimeout = 30; // 30 second timeout
+        return command;
+    }
+
+    /// <summary>
+    /// Gets database schema metadata asynchronously
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <param name="schema">Optional filter for specific schema, null returns all schemas</param>
+    /// <returns>List of table metadata information</returns>
+    public async Task<List<TableInfo>> GetDatabaseSchemaAsync(CancellationToken cancellationToken = default, string? schema = null)
+    {
+        _logger.LogInformation("Retrieving database schema" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+
+        var tables = new List<TableInfo>(); try
         {
-            _connectionString = connectionString;
-            _logger = logger;
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            // Get base tables
+            await GetTablesAsync(connection, tables, schema, cancellationToken);
+
+            // Get views
+            await GetViewsAsync(connection, tables, schema, cancellationToken);
+
+            // Get stored procedures
+            await GetStoredProceduresAsync(connection, tables, schema, cancellationToken);
+
+            // Get functions
+            await GetFunctionsAsync(connection, tables, schema, cancellationToken);
+
+            return tables;
         }
-
-        /// <summary>
-        /// Helper method to create SQL command with timeout
-        /// </summary>
-        private SqlCommand CreateCommandWithTimeout(string commandText, SqlConnection connection)
+        catch (OperationCanceledException)
         {
-            var command = new SqlCommand(commandText, connection);
-            command.CommandTimeout = 30; // 30 second timeout
-            return command;
+            _logger.LogWarning("Operation to retrieve database schema was canceled");
+            throw; // Let the calling code handle cancellation
         }
-
-        /// <summary>
-        /// Gets database schema metadata asynchronously
-        /// </summary>
-        /// <param name="cancellationToken">Cancellation token for the operation</param>
-        /// <param name="schema">Optional filter for specific schema, null returns all schemas</param>
-        /// <returns>List of table metadata information</returns>
-        public async Task<List<TableInfo>> GetDatabaseSchemaAsync(CancellationToken cancellationToken = default, string? schema = null)
+        catch (SqlException ex)
         {
-            _logger.LogInformation("Retrieving database schema" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+            _logger.LogError(ex, "SQL error retrieving database schema");
 
-            var tables = new List<TableInfo>(); try
+            // Add specific error handling for known SQL error codes
+            if (ex.Number == 208) // Invalid object name
             {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync(cancellationToken);
-
-                // Get base tables
-                await GetTablesAsync(connection, tables, schema, cancellationToken);
-
-                // Get views
-                await GetViewsAsync(connection, tables, schema, cancellationToken);
-
-                // Get stored procedures
-                await GetStoredProceduresAsync(connection, tables, schema, cancellationToken);
-
-                // Get functions
-                await GetFunctionsAsync(connection, tables, schema, cancellationToken);
-
-                return tables;
+                _logger.LogWarning("Attempted to query a non-existent table or view");
             }
-            catch (OperationCanceledException)
+            else if (ex.Number == 4060 || ex.Number == 18456) // Login failures
             {
-                _logger.LogWarning("Operation to retrieve database schema was canceled");
-                throw; // Let the calling code handle cancellation
+                _logger.LogWarning("Authentication or access denied error");
             }
-            catch (SqlException ex)
-            {
-                _logger.LogError(ex, "SQL error retrieving database schema");
 
-                // Add specific error handling for known SQL error codes
-                if (ex.Number == 208) // Invalid object name
-                {
-                    _logger.LogWarning("Attempted to query a non-existent table or view");
-                }
-                else if (ex.Number == 4060 || ex.Number == 18456) // Login failures
-                {
-                    _logger.LogWarning("Authentication or access denied error");
-                }
-
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving database schema");
-                throw;
-            }
+            throw;
         }
-
-        /// <summary>
-        /// Retrieves base table metadata
-        /// </summary>
-        private async Task GetTablesAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+        catch (Exception ex)
         {
-            var tableQuery = @"
+            _logger.LogError(ex, "Error retrieving database schema");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves base table metadata
+    /// </summary>
+    private async Task GetTablesAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+    {
+        var tableQuery = @"
                 SELECT 
                     t.TABLE_CATALOG,
                     t.TABLE_SCHEMA,
@@ -110,56 +110,56 @@ namespace mssqlMCP.Services
                 ORDER BY 
                     t.TABLE_SCHEMA, t.TABLE_NAME";
 
-            using var tableCommand = CreateCommandWithTimeout(tableQuery, connection);
-            if (schema != null)
-            {
-                tableCommand.Parameters.AddWithValue("@SchemaName", schema);
-            }
-            using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
-
-            var tableNames = new List<(string Schema, string Name)>();
-
-            while (await tableReader.ReadAsync(cancellationToken))
-            {
-                var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
-                var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
-                tableNames.Add((schemaName, name));
-            }
-            await tableReader.CloseAsync();
-
-            foreach (var table in tableNames)
-            {
-                var tableInfo = new TableInfo
-                {
-                    Schema = table.Schema,
-                    Name = table.Name,
-                    ObjectType = "BASE TABLE",
-                    Columns = new List<ColumnInfo>(),
-                    PrimaryKeys = new List<string>(),
-                    ForeignKeys = new List<ForeignKeyInfo>()
-                };
-
-                // Get columns
-                await GetColumnsAsync(connection, tableInfo, cancellationToken);
-
-                // Get primary keys
-                await GetPrimaryKeysAsync(connection, tableInfo, cancellationToken);
-
-                // Get foreign keys
-                await GetForeignKeysAsync(connection, tableInfo, cancellationToken);
-
-                tables.Add(tableInfo);
-            }
-        }
-
-        /// <summary>
-        /// Retrieves view metadata
-        /// </summary>
-        private async Task GetViewsAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+        using var tableCommand = CreateCommandWithTimeout(tableQuery, connection);
+        if (schema != null)
         {
-            _logger.LogInformation("Retrieving view metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+            tableCommand.Parameters.AddWithValue("@SchemaName", schema);
+        }
+        using var tableReader = await tableCommand.ExecuteReaderAsync(cancellationToken);
 
-            var viewQuery = @"
+        var tableNames = new List<(string Schema, string Name)>();
+
+        while (await tableReader.ReadAsync(cancellationToken))
+        {
+            var schemaName = tableReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
+            var name = tableReader["TABLE_NAME"].ToString() ?? string.Empty;
+            tableNames.Add((schemaName, name));
+        }
+        await tableReader.CloseAsync();
+
+        foreach (var table in tableNames)
+        {
+            var tableInfo = new TableInfo
+            {
+                Schema = table.Schema,
+                Name = table.Name,
+                ObjectType = "BASE TABLE",
+                Columns = new List<ColumnInfo>(),
+                PrimaryKeys = new List<string>(),
+                ForeignKeys = new List<ForeignKeyInfo>()
+            };
+
+            // Get columns
+            await GetColumnsAsync(connection, tableInfo, cancellationToken);
+
+            // Get primary keys
+            await GetPrimaryKeysAsync(connection, tableInfo, cancellationToken);
+
+            // Get foreign keys
+            await GetForeignKeysAsync(connection, tableInfo, cancellationToken);
+
+            tables.Add(tableInfo);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves view metadata
+    /// </summary>
+    private async Task GetViewsAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Retrieving view metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+
+        var viewQuery = @"
                 SELECT 
                     v.TABLE_CATALOG,
                     v.TABLE_SCHEMA,
@@ -173,55 +173,55 @@ namespace mssqlMCP.Services
                 ORDER BY 
                     v.TABLE_SCHEMA, v.TABLE_NAME";
 
-            using var viewCommand = CreateCommandWithTimeout(viewQuery, connection);
-            if (schema != null)
-            {
-                viewCommand.Parameters.AddWithValue("@SchemaName", schema);
-            }
-            using var viewReader = await viewCommand.ExecuteReaderAsync(cancellationToken);
-
-            var viewNames = new List<(string Schema, string Name)>();
-
-            while (await viewReader.ReadAsync(cancellationToken))
-            {
-                var schemaName = viewReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
-                var name = viewReader["TABLE_NAME"].ToString() ?? string.Empty;
-                viewNames.Add((schemaName, name));
-            }
-            await viewReader.CloseAsync();
-
-            foreach (var view in viewNames)
-            {
-                _logger.LogDebug("Processing view: {Schema}.{Name}", view.Schema, view.Name);
-                var viewInfo = new TableInfo
-                {
-                    Schema = view.Schema,
-                    Name = view.Name,
-                    ObjectType = "VIEW",
-                    Columns = new List<ColumnInfo>(),
-                    PrimaryKeys = new List<string>(),
-                    ForeignKeys = new List<ForeignKeyInfo>()
-                };
-
-                // Get columns for the view
-                await GetColumnsAsync(connection, viewInfo, cancellationToken);
-
-                // Views don't have their own primary and foreign keys in the traditional sense
-                // but we can try to identify columns that are keys in the base tables
-
-                // For views, we can also retrieve the view definition/query
-                await GetViewDefinitionAsync(connection, viewInfo, cancellationToken);
-
-                tables.Add(viewInfo);
-            }
-        }
-
-        /// <summary>
-        /// Retrieves the SQL definition of a view
-        /// </summary>
-        private async Task GetViewDefinitionAsync(SqlConnection connection, TableInfo viewInfo, CancellationToken cancellationToken = default)
+        using var viewCommand = CreateCommandWithTimeout(viewQuery, connection);
+        if (schema != null)
         {
-            var definitionQuery = @"
+            viewCommand.Parameters.AddWithValue("@SchemaName", schema);
+        }
+        using var viewReader = await viewCommand.ExecuteReaderAsync(cancellationToken);
+
+        var viewNames = new List<(string Schema, string Name)>();
+
+        while (await viewReader.ReadAsync(cancellationToken))
+        {
+            var schemaName = viewReader["TABLE_SCHEMA"].ToString() ?? string.Empty;
+            var name = viewReader["TABLE_NAME"].ToString() ?? string.Empty;
+            viewNames.Add((schemaName, name));
+        }
+        await viewReader.CloseAsync();
+
+        foreach (var view in viewNames)
+        {
+            _logger.LogDebug("Processing view: {Schema}.{Name}", view.Schema, view.Name);
+            var viewInfo = new TableInfo
+            {
+                Schema = view.Schema,
+                Name = view.Name,
+                ObjectType = "VIEW",
+                Columns = new List<ColumnInfo>(),
+                PrimaryKeys = new List<string>(),
+                ForeignKeys = new List<ForeignKeyInfo>()
+            };
+
+            // Get columns for the view
+            await GetColumnsAsync(connection, viewInfo, cancellationToken);
+
+            // Views don't have their own primary and foreign keys in the traditional sense
+            // but we can try to identify columns that are keys in the base tables
+
+            // For views, we can also retrieve the view definition/query
+            await GetViewDefinitionAsync(connection, viewInfo, cancellationToken);
+
+            tables.Add(viewInfo);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the SQL definition of a view
+    /// </summary>
+    private async Task GetViewDefinitionAsync(SqlConnection connection, TableInfo viewInfo, CancellationToken cancellationToken = default)
+    {
+        var definitionQuery = @"
                 SELECT 
                     v.VIEW_DEFINITION
                 FROM 
@@ -230,32 +230,32 @@ namespace mssqlMCP.Services
                     v.TABLE_SCHEMA = @Schema
                     AND v.TABLE_NAME = @ViewName";
 
-            using var command = CreateCommandWithTimeout(definitionQuery, connection);
-            command.Parameters.AddWithValue("@Schema", viewInfo.Schema);
-            command.Parameters.AddWithValue("@ViewName", viewInfo.Name);
+        using var command = CreateCommandWithTimeout(definitionQuery, connection);
+        command.Parameters.AddWithValue("@Schema", viewInfo.Schema);
+        command.Parameters.AddWithValue("@ViewName", viewInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken); if (await reader.ReadAsync(cancellationToken))
+        using var reader = await command.ExecuteReaderAsync(cancellationToken); if (await reader.ReadAsync(cancellationToken))
+        {
+            var definition = reader["VIEW_DEFINITION"] != DBNull.Value
+                ? reader["VIEW_DEFINITION"].ToString()
+                : null;
+            if (!string.IsNullOrEmpty(definition))
             {
-                var definition = reader["VIEW_DEFINITION"] != DBNull.Value
-                    ? reader["VIEW_DEFINITION"].ToString()
-                    : null;
-                if (!string.IsNullOrEmpty(definition))
-                {
-                    // Store the view definition in the TableInfo object
-                    viewInfo.Definition = definition;
+                // Store the view definition in the TableInfo object
+                viewInfo.Definition = definition;
 
-                    _logger.LogDebug("View definition for {Schema}.{Name}: {Definition}",
-                        viewInfo.Schema, viewInfo.Name, definition);
-                }
+                _logger.LogDebug("View definition for {Schema}.{Name}: {Definition}",
+                    viewInfo.Schema, viewInfo.Name, definition);
             }
         }
+    }
 
-        /// <summary>
-        /// Retrieves column metadata for a specific table
-        /// </summary>
-        private async Task GetColumnsAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
-        {
-            var columnQuery = @"
+    /// <summary>
+    /// Retrieves column metadata for a specific table
+    /// </summary>
+    private async Task GetColumnsAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
+    {
+        var columnQuery = @"
                 SELECT 
                     c.COLUMN_NAME,
                     c.DATA_TYPE,
@@ -272,35 +272,35 @@ namespace mssqlMCP.Services
                 ORDER BY 
                     c.ORDINAL_POSITION";
 
-            using var command = CreateCommandWithTimeout(columnQuery, connection);
-            command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
-            command.Parameters.AddWithValue("@TableName", tableInfo.Name);
+        using var command = CreateCommandWithTimeout(columnQuery, connection);
+        command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
+        command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var columnInfo = new ColumnInfo
-                {
-                    Name = reader["COLUMN_NAME"].ToString() ?? string.Empty,
-                    DataType = reader["DATA_TYPE"].ToString() ?? string.Empty,
-                    IsNullable = reader["IS_NULLABLE"].ToString() == "YES",
-                    MaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? Convert.ToInt32(reader["CHARACTER_MAXIMUM_LENGTH"]) : null,
-                    Precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_PRECISION"]) : null,
-                    Scale = reader["NUMERIC_SCALE"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_SCALE"]) : null,
-                    DefaultValue = reader["COLUMN_DEFAULT"] != DBNull.Value ? reader["COLUMN_DEFAULT"].ToString() : null
-                };
-
-                tableInfo.Columns.Add(columnInfo);
-            }
-        }
-
-        /// <summary>
-        /// Retrieves primary key metadata for a specific table
-        /// </summary>
-        private async Task GetPrimaryKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
+        while (await reader.ReadAsync(cancellationToken))
         {
-            var pkQuery = @"
+            var columnInfo = new ColumnInfo
+            {
+                Name = reader["COLUMN_NAME"].ToString() ?? string.Empty,
+                DataType = reader["DATA_TYPE"].ToString() ?? string.Empty,
+                IsNullable = reader["IS_NULLABLE"].ToString() == "YES",
+                MaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? Convert.ToInt32(reader["CHARACTER_MAXIMUM_LENGTH"]) : null,
+                Precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_PRECISION"]) : null,
+                Scale = reader["NUMERIC_SCALE"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_SCALE"]) : null,
+                DefaultValue = reader["COLUMN_DEFAULT"] != DBNull.Value ? reader["COLUMN_DEFAULT"].ToString() : null
+            };
+
+            tableInfo.Columns.Add(columnInfo);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves primary key metadata for a specific table
+    /// </summary>
+    private async Task GetPrimaryKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
+    {
+        var pkQuery = @"
                 SELECT 
                     c.COLUMN_NAME
                 FROM 
@@ -313,32 +313,32 @@ namespace mssqlMCP.Services
                     AND tc.TABLE_SCHEMA = @Schema
                     AND tc.TABLE_NAME = @TableName";
 
-            using var command = CreateCommandWithTimeout(pkQuery, connection);
-            command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
-            command.Parameters.AddWithValue("@TableName", tableInfo.Name);
+        using var command = CreateCommandWithTimeout(pkQuery, connection);
+        command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
+        command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync(cancellationToken))
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
+            tableInfo.PrimaryKeys.Add(columnName);
+
+            // Update the column info to mark it as a primary key
+            var column = tableInfo.Columns.FirstOrDefault(c => c.Name == columnName);
+            if (column != null)
             {
-                var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
-                tableInfo.PrimaryKeys.Add(columnName);
-
-                // Update the column info to mark it as a primary key
-                var column = tableInfo.Columns.FirstOrDefault(c => c.Name == columnName);
-                if (column != null)
-                {
-                    column.IsPrimaryKey = true;
-                }
+                column.IsPrimaryKey = true;
             }
         }
+    }
 
-        /// <summary>
-        /// Retrieves foreign key metadata for a specific table
-        /// </summary>
-        private async Task GetForeignKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
-        {
-            var fkQuery = @"
+    /// <summary>
+    /// Retrieves foreign key metadata for a specific table
+    /// </summary>
+    private async Task GetForeignKeysAsync(SqlConnection connection, TableInfo tableInfo, CancellationToken cancellationToken = default)
+    {
+        var fkQuery = @"
                 SELECT 
                     fk.name AS FK_NAME,
                     OBJECT_SCHEMA_NAME(fk.parent_object_id) AS SCHEMA_NAME,
@@ -359,43 +359,43 @@ namespace mssqlMCP.Services
                     OBJECT_SCHEMA_NAME(fk.parent_object_id) = @Schema
                     AND OBJECT_NAME(fk.parent_object_id) = @TableName";
 
-            using var command = CreateCommandWithTimeout(fkQuery, connection);
-            command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
-            command.Parameters.AddWithValue("@TableName", tableInfo.Name);
+        using var command = CreateCommandWithTimeout(fkQuery, connection);
+        command.Parameters.AddWithValue("@Schema", tableInfo.Schema);
+        command.Parameters.AddWithValue("@TableName", tableInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync(cancellationToken))
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var fkInfo = new ForeignKeyInfo
             {
-                var fkInfo = new ForeignKeyInfo
-                {
-                    Name = reader["FK_NAME"].ToString() ?? string.Empty,
-                    Column = reader["COLUMN_NAME"].ToString() ?? string.Empty,
-                    ReferencedSchema = reader["REFERENCED_SCHEMA_NAME"].ToString() ?? string.Empty,
-                    ReferencedTable = reader["REFERENCED_TABLE_NAME"].ToString() ?? string.Empty,
-                    ReferencedColumn = reader["REFERENCED_COLUMN_NAME"].ToString() ?? string.Empty
-                };
+                Name = reader["FK_NAME"].ToString() ?? string.Empty,
+                Column = reader["COLUMN_NAME"].ToString() ?? string.Empty,
+                ReferencedSchema = reader["REFERENCED_SCHEMA_NAME"].ToString() ?? string.Empty,
+                ReferencedTable = reader["REFERENCED_TABLE_NAME"].ToString() ?? string.Empty,
+                ReferencedColumn = reader["REFERENCED_COLUMN_NAME"].ToString() ?? string.Empty
+            };
 
-                tableInfo.ForeignKeys.Add(fkInfo);
+            tableInfo.ForeignKeys.Add(fkInfo);
 
-                // Update the column info to mark it as a foreign key
-                var column = tableInfo.Columns.FirstOrDefault(c => c.Name == fkInfo.Column);
-                if (column != null)
-                {
-                    column.IsForeignKey = true;
-                    column.ForeignKeyReference = $"{fkInfo.ReferencedSchema}.{fkInfo.ReferencedTable}.{fkInfo.ReferencedColumn}";
-                }
+            // Update the column info to mark it as a foreign key
+            var column = tableInfo.Columns.FirstOrDefault(c => c.Name == fkInfo.Column);
+            if (column != null)
+            {
+                column.IsForeignKey = true;
+                column.ForeignKeyReference = $"{fkInfo.ReferencedSchema}.{fkInfo.ReferencedTable}.{fkInfo.ReferencedColumn}";
             }
         }
+    }
 
-        /// <summary>
-        /// Retrieves stored procedure metadata
-        /// </summary>
-        private async Task GetStoredProceduresAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
-        {
-            _logger.LogInformation("Retrieving stored procedure metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
+    /// <summary>
+    /// Retrieves stored procedure metadata
+    /// </summary>
+    private async Task GetStoredProceduresAsync(SqlConnection connection, List<TableInfo> tables, string? schema, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Retrieving stored procedure metadata" + (schema != null ? $" for schema '{schema}'" : " for all schemas"));
 
-            var procQuery = @"
+        var procQuery = @"
                 SELECT 
                     ROUTINE_CATALOG,
                     ROUTINE_SCHEMA,
@@ -412,53 +412,53 @@ namespace mssqlMCP.Services
                 ORDER BY 
                     ROUTINE_SCHEMA, ROUTINE_NAME";
 
-            using var procCommand = CreateCommandWithTimeout(procQuery, connection);
-            if (schema != null)
-            {
-                procCommand.Parameters.AddWithValue("@SchemaName", schema);
-            }
-            using var procReader = await procCommand.ExecuteReaderAsync(cancellationToken);
-
-            var procNames = new List<(string Schema, string Name)>();
-
-            while (await procReader.ReadAsync(cancellationToken))
-            {
-                var schemaName = procReader["ROUTINE_SCHEMA"].ToString() ?? string.Empty;
-                var name = procReader["ROUTINE_NAME"].ToString() ?? string.Empty;
-                procNames.Add((schemaName, name));
-            }
-            await procReader.CloseAsync();
-
-            foreach (var proc in procNames)
-            {
-                _logger.LogDebug("Processing stored procedure: {Schema}.{Name}", proc.Schema, proc.Name);
-
-                var procInfo = new TableInfo
-                {
-                    Schema = proc.Schema,
-                    Name = proc.Name,
-                    ObjectType = "PROCEDURE",
-                    Columns = new List<ColumnInfo>(),
-                    PrimaryKeys = new List<string>(),
-                    ForeignKeys = new List<ForeignKeyInfo>()
-                };
-
-                // Get the procedure definition
-                await GetProcedureDefinitionAsync(connection, procInfo, cancellationToken);
-
-                // Get the procedure parameters
-                await GetProcedureParametersAsync(connection, procInfo, cancellationToken);
-
-                tables.Add(procInfo);
-            }
-        }
-
-        /// <summary>
-        /// Retrieves the SQL definition of a stored procedure
-        /// </summary>
-        private async Task GetProcedureDefinitionAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+        using var procCommand = CreateCommandWithTimeout(procQuery, connection);
+        if (schema != null)
         {
-            var definitionQuery = @"
+            procCommand.Parameters.AddWithValue("@SchemaName", schema);
+        }
+        using var procReader = await procCommand.ExecuteReaderAsync(cancellationToken);
+
+        var procNames = new List<(string Schema, string Name)>();
+
+        while (await procReader.ReadAsync(cancellationToken))
+        {
+            var schemaName = procReader["ROUTINE_SCHEMA"].ToString() ?? string.Empty;
+            var name = procReader["ROUTINE_NAME"].ToString() ?? string.Empty;
+            procNames.Add((schemaName, name));
+        }
+        await procReader.CloseAsync();
+
+        foreach (var proc in procNames)
+        {
+            _logger.LogDebug("Processing stored procedure: {Schema}.{Name}", proc.Schema, proc.Name);
+
+            var procInfo = new TableInfo
+            {
+                Schema = proc.Schema,
+                Name = proc.Name,
+                ObjectType = "PROCEDURE",
+                Columns = new List<ColumnInfo>(),
+                PrimaryKeys = new List<string>(),
+                ForeignKeys = new List<ForeignKeyInfo>()
+            };
+
+            // Get the procedure definition
+            await GetProcedureDefinitionAsync(connection, procInfo, cancellationToken);
+
+            // Get the procedure parameters
+            await GetProcedureParametersAsync(connection, procInfo, cancellationToken);
+
+            tables.Add(procInfo);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the SQL definition of a stored procedure
+    /// </summary>
+    private async Task GetProcedureDefinitionAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+    {
+        var definitionQuery = @"
                 SELECT 
                     r.ROUTINE_DEFINITION
                 FROM 
@@ -468,42 +468,42 @@ namespace mssqlMCP.Services
                     AND r.ROUTINE_NAME = @ProcName
                     AND r.ROUTINE_TYPE = 'PROCEDURE'";
 
-            using var command = CreateCommandWithTimeout(definitionQuery, connection);
-            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
-            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+        using var command = CreateCommandWithTimeout(definitionQuery, connection);
+        command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+        command.Parameters.AddWithValue("@ProcName", procInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            if (await reader.ReadAsync(cancellationToken))
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            var definition = reader["ROUTINE_DEFINITION"] != DBNull.Value
+                ? reader["ROUTINE_DEFINITION"].ToString()
+                : null;
+
+            if (!string.IsNullOrEmpty(definition))
             {
-                var definition = reader["ROUTINE_DEFINITION"] != DBNull.Value
-                    ? reader["ROUTINE_DEFINITION"].ToString()
-                    : null;
+                // If the definition is NULL or an empty string, the procedure might be using encrypted WITH ENCRYPTION
+                // or is a system procedure that doesn't expose its definition
+                procInfo.Definition = definition;
 
-                if (!string.IsNullOrEmpty(definition))
-                {
-                    // If the definition is NULL or an empty string, the procedure might be using encrypted WITH ENCRYPTION
-                    // or is a system procedure that doesn't expose its definition
-                    procInfo.Definition = definition;
-
-                    _logger.LogDebug("Stored procedure definition for {Schema}.{Name}: {Definition}",
-                        procInfo.Schema, procInfo.Name, definition);
-                }
-                else
-                {
-                    // For procedures where INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL,
-                    // try using sys.sql_modules
-                    await GetProcedureDefinitionFromSysModulesAsync(connection, procInfo, cancellationToken);
-                }
+                _logger.LogDebug("Stored procedure definition for {Schema}.{Name}: {Definition}",
+                    procInfo.Schema, procInfo.Name, definition);
+            }
+            else
+            {
+                // For procedures where INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL,
+                // try using sys.sql_modules
+                await GetProcedureDefinitionFromSysModulesAsync(connection, procInfo, cancellationToken);
             }
         }
+    }
 
-        /// <summary>
-        /// Retrieves the SQL definition from sys.sql_modules when INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL
-        /// </summary>
-        private async Task GetProcedureDefinitionFromSysModulesAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
-        {
-            var sysModulesQuery = @"
+    /// <summary>
+    /// Retrieves the SQL definition from sys.sql_modules when INFORMATION_SCHEMA.ROUTINES.ROUTINE_DEFINITION is NULL
+    /// </summary>
+    private async Task GetProcedureDefinitionFromSysModulesAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+    {
+        var sysModulesQuery = @"
                 SELECT 
                     m.definition
                 FROM 
@@ -516,39 +516,39 @@ namespace mssqlMCP.Services
                     s.name = @Schema
                     AND p.name = @ProcName";
 
-            using var command = CreateCommandWithTimeout(sysModulesQuery, connection);
-            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
-            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+        using var command = CreateCommandWithTimeout(sysModulesQuery, connection);
+        command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+        command.Parameters.AddWithValue("@ProcName", procInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            if (await reader.ReadAsync(cancellationToken))
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            var definition = reader["definition"] != DBNull.Value
+                ? reader["definition"].ToString()
+                : null;
+
+            if (!string.IsNullOrEmpty(definition))
             {
-                var definition = reader["definition"] != DBNull.Value
-                    ? reader["definition"].ToString()
-                    : null;
+                procInfo.Definition = definition;
 
-                if (!string.IsNullOrEmpty(definition))
-                {
-                    procInfo.Definition = definition;
-
-                    _logger.LogDebug("Stored procedure definition (from sys.sql_modules) for {Schema}.{Name}: {Definition}",
-                        procInfo.Schema, procInfo.Name, definition);
-                }
-                else
-                {
-                    _logger.LogWarning("Unable to retrieve definition for stored procedure {Schema}.{Name}. It may be encrypted.",
-                        procInfo.Schema, procInfo.Name);
-                }
+                _logger.LogDebug("Stored procedure definition (from sys.sql_modules) for {Schema}.{Name}: {Definition}",
+                    procInfo.Schema, procInfo.Name, definition);
+            }
+            else
+            {
+                _logger.LogWarning("Unable to retrieve definition for stored procedure {Schema}.{Name}. It may be encrypted.",
+                    procInfo.Schema, procInfo.Name);
             }
         }
+    }
 
-        /// <summary>
-        /// Retrieves the parameters of a stored procedure
-        /// </summary>
-        private async Task GetProcedureParametersAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
-        {
-            var parametersQuery = @"
+    /// <summary>
+    /// Retrieves the parameters of a stored procedure
+    /// </summary>
+    private async Task GetProcedureParametersAsync(SqlConnection connection, TableInfo procInfo, CancellationToken cancellationToken = default)
+    {
+        var parametersQuery = @"
                 SELECT 
                     p.PARAMETER_NAME,
                     p.DATA_TYPE,
@@ -565,33 +565,32 @@ namespace mssqlMCP.Services
                 ORDER BY 
                     p.ORDINAL_POSITION";
 
-            using var command = CreateCommandWithTimeout(parametersQuery, connection);
-            command.Parameters.AddWithValue("@Schema", procInfo.Schema);
-            command.Parameters.AddWithValue("@ProcName", procInfo.Name);
+        using var command = CreateCommandWithTimeout(parametersQuery, connection);
+        command.Parameters.AddWithValue("@Schema", procInfo.Schema);
+        command.Parameters.AddWithValue("@ProcName", procInfo.Name);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-            while (await reader.ReadAsync(cancellationToken))
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            // Store parameters as "columns" for consistency
+            var paramName = reader["PARAMETER_NAME"].ToString() ?? string.Empty;
+            var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
+            var paramMode = reader["PARAMETER_MODE"].ToString() ?? string.Empty;
+
+            var columnInfo = new ColumnInfo
             {
-                // Store parameters as "columns" for consistency
-                var paramName = reader["PARAMETER_NAME"].ToString() ?? string.Empty;
-                var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
-                var paramMode = reader["PARAMETER_MODE"].ToString() ?? string.Empty;
+                Name = paramName,
+                DataType = dataType,
+                IsNullable = true, // Most parameters allow NULL by default
+                MaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? Convert.ToInt32(reader["CHARACTER_MAXIMUM_LENGTH"]) : null,
+                Precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_PRECISION"]) : null,
+                Scale = reader["NUMERIC_SCALE"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_SCALE"]) : null,
+                // Add a property to indicate this is a parameter and its direction
+                Description = $"Parameter, Direction: {paramMode}"
+            };
 
-                var columnInfo = new ColumnInfo
-                {
-                    Name = paramName,
-                    DataType = dataType,
-                    IsNullable = true, // Most parameters allow NULL by default
-                    MaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? Convert.ToInt32(reader["CHARACTER_MAXIMUM_LENGTH"]) : null,
-                    Precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_PRECISION"]) : null,
-                    Scale = reader["NUMERIC_SCALE"] != DBNull.Value ? Convert.ToInt32(reader["NUMERIC_SCALE"]) : null,
-                    // Add a property to indicate this is a parameter and its direction
-                    Description = $"Parameter, Direction: {paramMode}"
-                };
-
-                procInfo.Columns.Add(columnInfo);
-            }
+            procInfo.Columns.Add(columnInfo);
         }
     }
 }
