@@ -1,15 +1,14 @@
 using System;
 
-namespace mssqlMCP.Models
+namespace mssqlMCP.Models;
+
+/// <summary>
+/// Request model for removing a database connection
+/// </summary>
+public class RemoveConnectionRequest
 {
     /// <summary>
-    /// Request model for removing a database connection
+    /// Name of the connection to remove (required)
     /// </summary>
-    public class RemoveConnectionRequest
-    {
-        /// <summary>
-        /// Name of the connection to remove (required)
-        /// </summary>
-        public string Name { get; set; } = string.Empty;
-    }
+    public string Name { get; set; } = string.Empty;
 }

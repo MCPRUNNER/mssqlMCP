@@ -1,23 +1,22 @@
 using System;
 
-namespace mssqlMCP.Models
+namespace mssqlMCP.Models;
+
+/// <summary>
+/// Response model for updating an existing database connection
+/// </summary>
+public class UpdateConnectionResponse
 {
     /// <summary>
-    /// Response model for updating an existing database connection
+    /// Indicates if the operation was successful
     /// </summary>
-    public class UpdateConnectionResponse
+    public bool Success
     {
-        /// <summary>
-        /// Indicates if the operation was successful
-        /// </summary>
-        public bool Success
-        {
-            get; set;
-        }
-
-        /// <summary>
-        /// Message describing the result of the operation
-        /// </summary>
-        public string Message { get; set; } = string.Empty;
+        get; set;
     }
+
+    /// <summary>
+    /// Message describing the result of the operation
+    /// </summary>
+    public string Message { get; set; } = string.Empty;
 }

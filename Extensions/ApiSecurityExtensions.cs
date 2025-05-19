@@ -1,19 +1,18 @@
 using Microsoft.AspNetCore.Builder;
 using mssqlMCP.Middleware;
 
-namespace mssqlMCP.Extensions
+namespace mssqlMCP.Extensions;
+
+/// <summary>
+/// Extension methods for API security features
+/// </summary>
+public static class ApiSecurityExtensions
 {
     /// <summary>
-    /// Extension methods for API security features
+    /// Adds API key authentication to the request pipeline
     /// </summary>
-    public static class ApiSecurityExtensions
+    public static IApplicationBuilder UseApiKeyAuthentication(this IApplicationBuilder app)
     {
-        /// <summary>
-        /// Adds API key authentication to the request pipeline
-        /// </summary>
-        public static IApplicationBuilder UseApiKeyAuthentication(this IApplicationBuilder app)
-        {
-            return app.UseMiddleware<ApiKeyAuthMiddleware>();
-        }
+        return app.UseMiddleware<ApiKeyAuthMiddleware>();
     }
 }

@@ -1,28 +1,27 @@
 using System;
 
-namespace mssqlMCP.Models
+namespace mssqlMCP.Models;
+
+/// <summary>
+/// Request model for adding a new database connection
+/// </summary>
+public class AddConnectionRequest
 {
     /// <summary>
-    /// Request model for adding a new database connection
+    /// The name of the connection
     /// </summary>
-    public class AddConnectionRequest
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The connection string for the database
+    /// </summary>
+    public string ConnectionString { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional description of the connection
+    /// </summary>
+    public string? Description
     {
-        /// <summary>
-        /// The name of the connection
-        /// </summary>
-        public string Name { get; set; } = string.Empty;
-
-        /// <summary>
-        /// The connection string for the database
-        /// </summary>
-        public string ConnectionString { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Optional description of the connection
-        /// </summary>
-        public string? Description
-        {
-            get; set;
-        }
+        get; set;
     }
 }

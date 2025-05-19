@@ -14,19 +14,7 @@ public interface ISqlServerTools
     /// <returns>Confirmation message</returns>
     Task<string> Initialize(string connectionName = "DefaultConnection");
 
-    /// <summary>
-    /// Echoes the message back to the client
-    /// </summary>
-    /// <param name="message">The message to echo</param>
-    /// <returns>The echoed message</returns>
-    string Echo(string message);
-
-    /// <summary>
-    /// Echoes the message back to the client. F1 version.
-    /// </summary>
-    /// <param name="message">The message to echo</param>
-    /// <returns>The echoed message</returns>
-    string F1Echo(string message);
+ 
 
     /// <summary>
     /// Executes a SQL query and returns the results as JSON

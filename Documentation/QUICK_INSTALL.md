@@ -369,3 +369,11 @@ The database includes procedures for:
 ## Summary
 
 The AdventureWorks2019 database is a comprehensive relational database that models a bicycle manufacturing business with interconnected schemas for human resources, sales, purchasing, production, and person data. The well-structured design with normalized tables, supporting views, and stored procedures provides a realistic enterprise database model.
+
+## Running with Docker
+
+### Building the Docker Image
+
+```bash
+docker build -t mssqlmcp:latest .
+```

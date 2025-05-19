@@ -252,8 +252,8 @@ app.MapMcp();
 // Run the application
 app.Lifetime.ApplicationStarted.Register(() => Log.Information("SQL Server MCP Server started"));
 
-app.Run("http://localhost:3001");
-
+// app.Run("http://localhost:3001");
+app.Run();
 // Global logger factory for static classes
 public static class LoggerFactory
 {
