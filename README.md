@@ -72,6 +72,7 @@ This project includes a robust connection management system that allows you to:
 Connections are stored in a Sqlite database:
 
 - **SQLite database**: Located in the `Data/connections.db` file, providing persistent storage
+- **SQLite database override location**: Override the Data directory location with Environment Variable `MSSQL_MCP_DATA`
 
 ### Connection Management Tools
 
@@ -918,3 +919,11 @@ curl -X POST http://localhost:3001/ -H "X-API-Key: your-api-key" -H "Content-Typ
 - Rotate API keys periodically for enhanced security
 - Use HTTPS in production environments when exposing the API
 - For high-security environments, consider implementing additional authentication methods
+
+## Running with Docker
+
+### Building the Docker Image
+
+```bash
+docker build -t mssqlmcp:latest .
+```

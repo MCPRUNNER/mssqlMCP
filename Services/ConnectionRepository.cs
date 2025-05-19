@@ -37,15 +37,32 @@ public class SqliteConnectionRepository : IConnectionRepository, IDisposable
     {
         _logger = logger;
         _encryptionService = encryptionService;
+        var dataDirectory = Environment.GetEnvironmentVariable("MSSQL_MCP_DATA");
 
-        // Create data directory if it doesn't exist
-        var dataDir = Path.Combine(AppContext.BaseDirectory, "Data");
-        if (!Directory.Exists(dataDir))
+        if (!string.IsNullOrEmpty(dataDirectory))
         {
-            Directory.CreateDirectory(dataDir);
+            // Use the specified data directory
+            dataDirectory = Path.GetFullPath(dataDirectory);
+            // Create data directory if it doesn't exist
+            if (!Directory.Exists(dataDirectory))
+            {
+                Directory.CreateDirectory(dataDirectory);
+            }
+        }
+        else
+        {
+            // Use the default data directory
+            dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
+            // Create data directory if it doesn't exist
+            if (!Directory.Exists(dataDirectory))
+            {
+                Directory.CreateDirectory(dataDirectory);
+            }
         }
 
-        var dbPath = Path.Combine(dataDir, "connections.db");
+
+
+        var dbPath = Path.Combine(dataDirectory, "connections.db");
         _connectionString = $"Data Source={dbPath}";
     }
 
