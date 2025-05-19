@@ -54,6 +54,10 @@ See the [full architecural documentation](./Documentation/Architecture.md) for d
 - SQL Server instance (local or remote)
 - Visual Studio Code with Copilot extension
 
+### Docker Image
+
+To run via a pre-built docker image download and run via hub.docker.com [7045khz/mssqlmcp](https://hub.docker.com/r/7045khz/mssqlmcp)
+
 ### Installation and Setup
 
 See [QUICK_INSTALL](./Documentation/QUICK_INSTALL.md)
