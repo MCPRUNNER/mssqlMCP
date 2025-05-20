@@ -1,5 +1,9 @@
 # Quick Installation
 
+## The Quickest Way to use mssqlMCP
+
+Just use the docker image `7045khz/mssqlmcp` [Docker Hub Instructions](/Documentation/DockerHub.md)
+
 ## Install Tasks
 
 1. Checkout code from [https://github.com/7045kHz/mssqlMCP.git](https://github.com/7045kHz/mssqlMCP.git)
