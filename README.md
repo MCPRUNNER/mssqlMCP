@@ -13,12 +13,15 @@ Features include:
 - Detailed schema information including primary/foreign keys
 - Connection string encryption with AES-256
 - Key rotation and security management
-- Echo capabilities for testing
 - Async/await for all database operations
 - Robust logging with Serilog
 - Clean architecture with separation of concerns
 - Dependency injection for testable components
 - Strongly-typed models for database metadata
+
+## How This Works
+
+See [How This Works](./Documentation/HowItWorks.md) for an overview of communication between Copilot, the LLM and this MSSQL Model Context Protocol Server.
 
 ## Getting Started
 
@@ -463,8 +466,6 @@ These examples demonstrate how Copilot can help you explore relationships betwee
 
 ## Available Tools
 
-- `echo`: Echoes a message back to the client
-- `f1Echo`: Alternative echo function (F1 version)
 - `initialize`: Initializes the SQL Server connection
 - `executeQuery`: Executes a SQL query and returns results as JSON
 - `getTableMetadata`: Retrieves metadata about database tables, columns, keys, etc. You can filter by schema or get all schemas.
@@ -910,11 +911,11 @@ When API key authentication is enabled, all HTTP requests to the server must inc
 # PowerShell example
 Invoke-RestMethod -Uri "http://localhost:3001/" -Method Post `
   -Headers @{"X-API-Key" = "your-api-key"; "Content-Type" = "application/json"} `
-  -Body '{"jsonrpc": "2.0", "id": 1, "method": "echo", "params": {"message": "Hello"}}'
+  -Body '{"jsonrpc": "2.0", "id": 1, "method": "#TestConnection", "params": {"ConnectionName": "My_DBCONNECTION_Name"}}'
 
 # curl example
 curl -X POST http://localhost:3001/ -H "X-API-Key: your-api-key" -H "Content-Type: application/json" `
-  -d '{"jsonrpc": "2.0", "id": 1, "method": "echo", "params": {"message": "Hello"}}'
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "#TestConnection", "params": {"ConnectionName": "My_DBCONNECTION_Name"}}'
 ```
 
 #### Security Considerations
@@ -923,11 +924,3 @@ curl -X POST http://localhost:3001/ -H "X-API-Key: your-api-key" -H "Content-Typ
 - Rotate API keys periodically for enhanced security
 - Use HTTPS in production environments when exposing the API
 - For high-security environments, consider implementing additional authentication methods
-
-## Running with Docker
-
-### Building the Docker Image
-
-```bash
-docker build -t mssqlmcp:latest .
-```
