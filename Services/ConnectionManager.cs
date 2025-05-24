@@ -185,18 +185,37 @@ public class ConnectionManager : IConnectionManager
     /// <summary>
     /// Test if a connection string is valid
     /// </summary>
-    public async Task<bool> TestConnectionAsync(string connectionString)
+    public async Task<bool> TestConnectionAsync(string connectionStringOrName)
     {
         try
         {
-            using var connection = new SqlConnection(connectionString);
+            // If the input is a known connection name, fetch the connection string from repository
+            var entry = await _repository.GetConnectionAsync(connectionStringOrName);
+            if (entry != null && !string.IsNullOrWhiteSpace(entry.ConnectionString))
+            {
+                connectionStringOrName = entry.ConnectionString;
+            }
+            else if (connectionStringOrName.Contains(";"))
+            {
+                // Assume it's a raw connection string
+            }
+            else
+            {
+                // Try legacy provider as fallback
+                var legacy = await _legacyProvider.GetConnectionStringAsync(connectionStringOrName);
+                if (!string.IsNullOrWhiteSpace(legacy))
+                {
+                    connectionStringOrName = legacy;
+                }
+            }
+            using var connection = new SqlConnection(connectionStringOrName);
             await connection.OpenAsync();
             _logger.LogInformation("Connection test successful");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Connection test failed");
+            _logger.LogError($"Connection test failed: {ex.Message}\n{ex.StackTrace}");
             return false;
         }
     }
