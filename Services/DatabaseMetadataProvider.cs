@@ -764,4 +764,9 @@ public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
         }
         return job;
     }
+
+    /// <summary>
+    /// Gets SSIS catalog information including Project Deployment and Package Deployment models
+    /// </summary>
+    // This method is implemented in DatabaseMetadataProvider.Ssis.cs partial class
 }

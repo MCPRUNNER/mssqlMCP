@@ -411,6 +411,39 @@ public class SqlServerTools : ISqlServerTools
     }
 
     /// <summary>
+    /// Gets SSIS catalog information including Project Deployment and Package Deployment models
+    /// </summary>
+    [McpServerTool, Description("Gets SSIS catalog information including Project Deployment and Package Deployment models.")]
+    public async Task<string> GetSsisCatalogInfo(string connectionName = "DefaultConnection")
+    {
+        _logger.LogInformation("Getting SSIS catalog information for connection: {ConnectionName}", connectionName);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+        try
+        {
+            var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+            string connectionString;
+            if (connection != null)
+            {
+                connectionString = connection.ConnectionString;
+            }
+            else
+            {
+                connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+            }
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+            var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+            var catalogInfo = await metadataProvider.GetSsisCatalogInfoAsync(cts.Token);
+            return JsonSerializer.Serialize(catalogInfo, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting SSIS catalog information");
+            return "{ \"error\": \"An error occurred while retrieving SSIS catalog information. The catalog may not exist on this server or you may not have sufficient permissions.\" }";
+        }
+    }
+
+    /// <summary>
     /// Converts a DataTable to JSON string
     /// </summary>
     /// <param name="dataTable">The DataTable to convert</param>
