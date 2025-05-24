@@ -21,13 +21,13 @@ public partial class DatabaseMetadataProvider
     {
         if (value == null || value == DBNull.Value)
             return DateTime.MinValue;
-
+            
         if (value is DateTime dateTime)
             return dateTime;
-
+            
         if (value is DateTimeOffset dateTimeOffset)
             return dateTimeOffset.DateTime;
-
+            
         try
         {
             return DateTime.Parse(value.ToString() ?? string.Empty);
@@ -121,7 +121,14 @@ public partial class DatabaseMetadataProvider
                             p.name, 
                             p.description,
                             p.created_time,
-                            p.last_deployed_time,                            'Project' as deployment_model -- All projects in SSISDB use project deployment model
+                            p.last_deployed_time,
+                            CASE 
+                                WHEN EXISTS (
+                                    SELECT 1 FROM [SSISDB].[catalog].[packages] pkg 
+                                    WHERE pkg.project_id = p.project_id
+                                ) THEN 'Project'
+                                ELSE 'Package' 
+                            END as deployment_model
                         FROM [SSISDB].[catalog].[projects] p
                         INNER JOIN [SSISDB].[catalog].[folders] f ON p.folder_id = f.folder_id
                         WHERE f.name = @FolderName";
@@ -148,25 +155,23 @@ public partial class DatabaseMetadataProvider
                         else
                         {
                             catalogInfo.PackageDeploymentCount++;
-                        }                        // Get packages for each project
-                        try
-                        {                            // Use a separate connection for nested operations to avoid DataReader conflicts
-                            using var packageConnection = new SqlConnection(_connectionString);
-                            await packageConnection.OpenAsync(cancellationToken);
+                        }
 
-                            // Query with correct column names from INFORMATION_SCHEMA
+                        // Get packages for each project
+                        try
+                        {
                             var packagesQuery = @"
                                 SELECT 
                                     pkg.name,
                                     pkg.description,
-                                    p.created_time,
-                                    pkg.last_validation_time
+                                    pkg.created_time,
+                                    pkg.last_validated_time
                                 FROM [SSISDB].[catalog].[packages] pkg
                                 INNER JOIN [SSISDB].[catalog].[projects] p ON pkg.project_id = p.project_id
                                 INNER JOIN [SSISDB].[catalog].[folders] f ON p.folder_id = f.folder_id
                                 WHERE f.name = @FolderName AND p.name = @ProjectName";
 
-                            using var packagesCmd = CreateCommandWithTimeout(packagesQuery, packageConnection);
+                            using var packagesCmd = CreateCommandWithTimeout(packagesQuery, connection);
                             packagesCmd.Parameters.AddWithValue("@FolderName", folder.Name);
                             packagesCmd.Parameters.AddWithValue("@ProjectName", project.Name);
                             using var pkgReader = await packagesCmd.ExecuteReaderAsync(cancellationToken);
@@ -177,7 +182,7 @@ public partial class DatabaseMetadataProvider
                                     Name = pkgReader["name"]?.ToString() ?? string.Empty,
                                     Description = pkgReader["description"]?.ToString() ?? string.Empty,
                                     CreatedDate = SafeGetDateTime(pkgReader["created_time"]),
-                                    LastModifiedDate = SafeGetDateTime(pkgReader["last_validation_time"])
+                                    LastModifiedDate = SafeGetDateTime(pkgReader["last_validated_time"])
                                 };
                                 project.Packages.Add(package);
                                 catalogInfo.PackageCount++;
@@ -185,8 +190,7 @@ public partial class DatabaseMetadataProvider
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "Could not retrieve packages for project {ProjectName} in folder {FolderName}. Parameters used: FolderName={FolderName}, ProjectName={ProjectName}",
-                                project.Name, folder.Name, folder.Name, project.Name);
+                            _logger.LogWarning(ex, "Could not retrieve packages for project {ProjectName}", project.Name);
                             // Continue with what we have
                         }
                     }
