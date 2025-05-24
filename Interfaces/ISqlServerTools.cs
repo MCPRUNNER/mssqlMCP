@@ -52,4 +52,11 @@ public interface ISqlServerTools
     /// <param name="connectionName">The name of the connection string to use</param>
     /// <returns>JSON representation of SQL Server Agent jobs</returns>
     Task<string> GetSqlServerAgentJobs(string connectionName = "DefaultConnection");
+    /// <summary>
+    /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
+    /// </summary>
+    /// <param name="jobName">The name of the job</param>
+    /// <param name="connectionName">The name of the connection string to use</param>
+    /// <returns>JSON representation of job info with steps, schedules, and history</returns>
+    Task<string> GetSqlServerAgentJobDetails(string jobName, string connectionName = "DefaultConnection");
 }

@@ -22,4 +22,7 @@ public class SqlServerAgentJobInfo
         get; set;
     }
     public string Category { get; set; } = string.Empty;
+    public List<SqlServerAgentJobStepInfo> Steps { get; set; } = new();
+    public List<SqlServerAgentJobScheduleInfo> Schedules { get; set; } = new();
+    public List<SqlServerAgentJobHistoryInfo> History { get; set; } = new();
 }

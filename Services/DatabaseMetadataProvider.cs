@@ -641,4 +641,127 @@ public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
         }
         return jobs;
     }
+
+    /// <summary>
+    /// Gets detailed information about a specific SQL Server Agent job, including steps, schedules, and execution history
+    /// </summary>
+    /// <param name="jobName">Name of the job to retrieve details for</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>SqlServerAgentJobInfo object with detailed information about the job</returns>
+    public async Task<SqlServerAgentJobInfo?> GetSqlServerAgentJobDetailsAsync(string jobName, CancellationToken cancellationToken = default)
+    {
+        SqlServerAgentJobInfo? job = null;
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            // Get job metadata
+            var jobQuery = @"
+                SELECT job.job_id, job.name, job.enabled, job.description, SUSER_SNAME(job.owner_sid) AS owner,
+                       job.date_created, job.date_modified, cat.name AS category
+                FROM msdb.dbo.sysjobs job
+                LEFT JOIN msdb.dbo.syscategories cat ON job.category_id = cat.category_id
+                WHERE job.name = @JobName
+            ";
+            using (var jobCmd = CreateCommandWithTimeout(jobQuery, connection))
+            {
+                jobCmd.Parameters.AddWithValue("@JobName", jobName);
+                using var reader = await jobCmd.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    job = new SqlServerAgentJobInfo
+                    {
+                        JobId = reader.GetGuid(reader.GetOrdinal("job_id")),
+                        Name = reader["name"]?.ToString() ?? string.Empty,
+                        Enabled = reader["enabled"] != DBNull.Value && Convert.ToInt32(reader["enabled"]) == 1,
+                        Description = reader["description"]?.ToString() ?? string.Empty,
+                        Owner = reader["owner"]?.ToString() ?? string.Empty,
+                        DateCreated = reader["date_created"] != DBNull.Value ? Convert.ToDateTime(reader["date_created"]) : DateTime.MinValue,
+                        DateModified = reader["date_modified"] != DBNull.Value ? Convert.ToDateTime(reader["date_modified"]) : DateTime.MinValue,
+                        Category = reader["category"]?.ToString() ?? string.Empty
+                    };
+                }
+            }
+            if (job == null) return null;
+
+            // Get job steps
+            var stepsQuery = @"
+                SELECT step_id, step_name, subsystem, command, database_name, on_success_action, on_fail_action
+                FROM msdb.dbo.sysjobsteps WHERE job_id = @JobId ORDER BY step_id
+            ";
+            using (var stepsCmd = CreateCommandWithTimeout(stepsQuery, connection))
+            {
+                stepsCmd.Parameters.AddWithValue("@JobId", job.JobId);
+                using var reader = await stepsCmd.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    job.Steps.Add(new SqlServerAgentJobStepInfo
+                    {
+                        StepId = reader.GetInt32(reader.GetOrdinal("step_id")),
+                        StepName = reader["step_name"]?.ToString() ?? string.Empty,
+                        Subsystem = reader["subsystem"]?.ToString() ?? string.Empty,
+                        Command = reader["command"]?.ToString() ?? string.Empty,
+                        DatabaseName = reader["database_name"]?.ToString() ?? string.Empty,
+                        OnSuccessAction = reader["on_success_action"] != DBNull.Value ? Convert.ToInt32(reader["on_success_action"]) : 0,
+                        OnFailAction = reader["on_fail_action"] != DBNull.Value ? Convert.ToInt32(reader["on_fail_action"]) : 0
+                    });
+                }
+            }
+
+            // Get schedules
+            var schedulesQuery = @"
+                SELECT s.name AS schedule_name, s.enabled, s.freq_type, s.active_start_time, s.active_end_time
+                FROM msdb.dbo.sysjobschedules js
+                JOIN msdb.dbo.sysschedules s ON js.schedule_id = s.schedule_id
+                WHERE js.job_id = @JobId
+            ";
+            using (var schedCmd = CreateCommandWithTimeout(schedulesQuery, connection))
+            {
+                schedCmd.Parameters.AddWithValue("@JobId", job.JobId);
+                using var reader = await schedCmd.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    job.Schedules.Add(new SqlServerAgentJobScheduleInfo
+                    {
+                        ScheduleName = reader["schedule_name"]?.ToString() ?? string.Empty,
+                        Enabled = reader["enabled"] != DBNull.Value && Convert.ToInt32(reader["enabled"]) == 1,
+                        FrequencyType = reader["freq_type"] != DBNull.Value ? Convert.ToInt32(reader["freq_type"]) : 0,
+                        ActiveStartTime = reader["active_start_time"] != DBNull.Value ? Convert.ToInt32(reader["active_start_time"]) : 0,
+                        ActiveEndTime = reader["active_end_time"] != DBNull.Value ? Convert.ToInt32(reader["active_end_time"]) : 0
+                    });
+                }
+            }
+
+            // Get execution history (last 10 runs)
+            var historyQuery = @"
+                SELECT TOP 10 instance_id, run_date, run_time, run_status, run_duration, message
+                FROM msdb.dbo.sysjobhistory
+                WHERE job_id = @JobId
+                ORDER BY instance_id DESC
+            ";
+            using (var histCmd = CreateCommandWithTimeout(historyQuery, connection))
+            {
+                histCmd.Parameters.AddWithValue("@JobId", job.JobId);
+                using var reader = await histCmd.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    job.History.Add(new SqlServerAgentJobHistoryInfo
+                    {
+                        InstanceId = reader["instance_id"] != DBNull.Value ? Convert.ToInt32(reader["instance_id"]) : 0,
+                        RunDate = reader["run_date"] != DBNull.Value ? Convert.ToInt32(reader["run_date"]) : 0,
+                        RunTime = reader["run_time"] != DBNull.Value ? Convert.ToInt32(reader["run_time"]) : 0,
+                        RunStatus = reader["run_status"] != DBNull.Value ? Convert.ToInt32(reader["run_status"]) : 0,
+                        RunDuration = reader["run_duration"] != DBNull.Value ? Convert.ToInt32(reader["run_duration"]) : 0,
+                        Message = reader["message"]?.ToString() ?? string.Empty
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving SQL Server Agent job details for {JobName}", jobName);
+        }
+        return job;
+    }
 }

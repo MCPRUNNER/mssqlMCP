@@ -21,4 +21,12 @@ public interface IDatabaseMetadataProvider
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>List of SQL Server Agent job metadata</returns>
     Task<List<SqlServerAgentJobInfo>> GetSqlServerAgentJobsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
+    /// </summary>
+    /// <param name="jobName">The name of the job</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>Job info with steps, schedules, and history</returns>
+    Task<SqlServerAgentJobInfo?> GetSqlServerAgentJobDetailsAsync(string jobName, CancellationToken cancellationToken = default);
 }
