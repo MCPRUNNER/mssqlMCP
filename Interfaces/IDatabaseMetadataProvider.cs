@@ -36,4 +36,11 @@ public interface IDatabaseMetadataProvider
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>SSIS catalog information including folders, projects, and packages</returns>
     Task<SsisCatalogInfo?> GetSsisCatalogInfoAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets Azure DevOps information including projects, repositories, builds, and work items
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>Azure DevOps information or null if error</returns>
+    Task<AzureDevOpsInfo?> GetAzureDevOpsInfoAsync(CancellationToken cancellationToken = default);
 }

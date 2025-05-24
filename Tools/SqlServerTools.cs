@@ -257,13 +257,11 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting database objects metadata");
             return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
         }
-    }
-
-    /// <summary>
-    /// Gets detailed metadata about specific database object types (tables or views)
-    /// </summary>
+    }    /// <summary>
+         /// Gets detailed metadata about specific database object types (tables or views)
+         /// </summary>
     [McpServerTool, Description("Gets detailed metadata about specific database object types.")]
-    public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
+    public async Task<string> GetDatabaseObjectsByType(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
     {
         _logger.LogInformation("Getting database objects metadata for connection: {ConnectionName}, schema: {Schema}, objectType: {ObjectType}",
             connectionName, schema ?? "all schemas", objectType);
@@ -440,6 +438,54 @@ public class SqlServerTools : ISqlServerTools
         {
             _logger.LogError(ex, "Error getting SSIS catalog information");
             return "{ \"error\": \"An error occurred while retrieving SSIS catalog information. The catalog may not exist on this server or you may not have sufficient permissions.\" }";
+        }
+    }    /// <summary>
+         /// Gets Azure DevOps information including projects, repositories, builds, and work items
+         /// </summary>
+    [McpServerTool, Description("Gets Azure DevOps information including projects, repositories, builds, and work items.")]
+    public async Task<string> GetAzureDevOpsInfo(string connectionName = "DefaultConnection")
+    {
+        _logger.LogInformation("Getting Azure DevOps information for connection: {ConnectionName}", connectionName);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+        try
+        {
+            // Use the connection manager to get connection details
+            var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+            string connectionString;
+
+            if (connection != null)
+            {
+                connectionString = connection.ConnectionString;
+            }
+            else
+            {
+                // Fall back to legacy provider if not found in SQLite
+                connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+            }
+
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+            var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+
+            // Use the proper implementation from DatabaseMetadataProvider
+            var azureDevOpsInfo = await metadataProvider.GetAzureDevOpsInfoAsync(cts.Token);
+
+            if (azureDevOpsInfo == null)
+            {
+                return "{ \"error\": \"This does not appear to be an Azure DevOps database or you may not have sufficient permissions.\" }";
+            }
+
+            return JsonSerializer.Serialize(azureDevOpsInfo, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (SqlException sqlEx)
+        {
+            _logger.LogError(sqlEx, "SQL error getting Azure DevOps information");
+            return "{ \"error\": \"Database error occurred while retrieving Azure DevOps information.\" }";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Azure DevOps information");
+            return "{ \"error\": \"An error occurred while retrieving Azure DevOps information. This may not be an Azure DevOps database or you may not have sufficient permissions.\" }";
         }
     }
 
