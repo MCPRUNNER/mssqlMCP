@@ -6,8 +6,8 @@ using System.Data;
 
 namespace mssqlMCP.Services;
 /// <summary>
- /// Service that provides metadata information about SQL Server databases
- /// </summary>
+/// Service that provides metadata information about SQL Server databases
+/// </summary>
 public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
 {
     private readonly string _connectionString;
@@ -592,5 +592,53 @@ public partial class DatabaseMetadataProvider : IDatabaseMetadataProvider
 
             procInfo.Columns.Add(columnInfo);
         }
+    }
+
+    /// <summary>
+    /// Retrieves SQL Server Agent job metadata from msdb
+    /// </summary>
+    public async Task<List<SqlServerAgentJobInfo>> GetSqlServerAgentJobsAsync(CancellationToken cancellationToken = default)
+    {
+        var jobs = new List<SqlServerAgentJobInfo>();
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            var query = @"
+                SELECT 
+                    job.job_id,
+                    job.name,
+                    job.enabled,
+                    job.description,
+                    SUSER_SNAME(job.owner_sid) AS owner,
+                    job.date_created,
+                    job.date_modified,
+                    cat.name AS category
+                FROM msdb.dbo.sysjobs job
+                LEFT JOIN msdb.dbo.syscategories cat ON job.category_id = cat.category_id
+                ORDER BY job.name
+            ";
+            using var command = CreateCommandWithTimeout(query, connection);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                jobs.Add(new SqlServerAgentJobInfo
+                {
+                    JobId = reader.GetGuid(reader.GetOrdinal("job_id")),
+                    Name = reader["name"]?.ToString() ?? string.Empty,
+                    Enabled = reader["enabled"] != DBNull.Value && Convert.ToInt32(reader["enabled"]) == 1,
+                    Description = reader["description"]?.ToString() ?? string.Empty,
+                    Owner = reader["owner"]?.ToString() ?? string.Empty,
+                    DateCreated = reader["date_created"] != DBNull.Value ? Convert.ToDateTime(reader["date_created"]) : DateTime.MinValue,
+                    DateModified = reader["date_modified"] != DBNull.Value ? Convert.ToDateTime(reader["date_modified"]) : DateTime.MinValue,
+                    Category = reader["category"]?.ToString() ?? string.Empty
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving SQL Server Agent jobs");
+        }
+        return jobs;
     }
 }

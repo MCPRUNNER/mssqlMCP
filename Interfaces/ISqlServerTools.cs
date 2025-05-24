@@ -14,7 +14,7 @@ public interface ISqlServerTools
     /// <returns>Confirmation message</returns>
     Task<string> Initialize(string connectionName = "DefaultConnection");
 
- 
+
 
     /// <summary>
     /// Executes a SQL query and returns the results as JSON
@@ -46,4 +46,10 @@ public interface ISqlServerTools
                                                                                                                                               /// <param name="objectType">Object type filter: "TABLE", "VIEW", "PROCEDURE", "FUNCTION", or "ALL"</param>
                                                                                                                                               /// <returns>JSON representation of database metadata</returns>
     Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL");
+    /// <summary>
+    /// Gets SQL Server Agent job metadata from msdb
+    /// </summary>
+    /// <param name="connectionName">The name of the connection string to use</param>
+    /// <returns>JSON representation of SQL Server Agent jobs</returns>
+    Task<string> GetSqlServerAgentJobs(string connectionName = "DefaultConnection");
 }
