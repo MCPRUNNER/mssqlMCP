@@ -59,4 +59,10 @@ public interface ISqlServerTools
     /// <param name="connectionName">The name of the connection string to use</param>
     /// <returns>JSON representation of job info with steps, schedules, and history</returns>
     Task<string> GetSqlServerAgentJobDetails(string jobName, string connectionName = "DefaultConnection");
+    /// <summary>
+    /// Gets SSIS catalog information including Project Deployment and Package Deployment models
+    /// </summary>
+    /// <param name="connectionName">The name of the connection string to use</param>
+    /// <returns>JSON representation of SSIS catalog information</returns>
+    Task<string> GetSsisCatalogInfo(string connectionName = "DefaultConnection");
 }

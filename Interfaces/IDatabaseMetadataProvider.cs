@@ -29,4 +29,11 @@ public interface IDatabaseMetadataProvider
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Job info with steps, schedules, and history</returns>
     Task<SqlServerAgentJobInfo?> GetSqlServerAgentJobDetailsAsync(string jobName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets SSIS catalog information including Project Deployment and Package Deployment models
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>SSIS catalog information including folders, projects, and packages</returns>
+    Task<SsisCatalogInfo?> GetSsisCatalogInfoAsync(CancellationToken cancellationToken = default);
 }
