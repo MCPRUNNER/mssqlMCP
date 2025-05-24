@@ -345,6 +345,72 @@ public class SqlServerTools : ISqlServerTools
     }
 
     /// <summary>
+    /// Gets SQL Server Agent job metadata from msdb
+    /// </summary>
+    [McpServerTool, Description("Gets SQL Server Agent job metadata (jobs, status, owner, etc.) from msdb.")]
+    public async Task<string> GetSqlServerAgentJobs(string connectionName = "DefaultConnection")
+    {
+        _logger.LogInformation("Getting SQL Server Agent jobs for connection: {ConnectionName}", connectionName);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        try
+        {
+            var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+            string connectionString;
+            if (connection != null)
+            {
+                connectionString = connection.ConnectionString;
+            }
+            else
+            {
+                connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+            }
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+            var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+            var jobs = await metadataProvider.GetSqlServerAgentJobsAsync(cts.Token);
+            return JsonSerializer.Serialize(jobs, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting SQL Server Agent jobs");
+            return "{ \"error\": \"An error occurred while retrieving SQL Server Agent jobs.\" }";
+        }
+    }
+
+    /// <summary>
+    /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
+    /// </summary>
+    [McpServerTool, Description("Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job.")]
+    public async Task<string> GetSqlServerAgentJobDetails(string jobName, string connectionName = "DefaultConnection")
+    {
+        _logger.LogInformation("Getting SQL Server Agent job details for job: {JobName} on connection: {ConnectionName}", jobName, connectionName);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        try
+        {
+            var connection = await _connectionManager.GetConnectionEntryAsync(connectionName);
+            string connectionString;
+            if (connection != null)
+            {
+                connectionString = connection.ConnectionString;
+            }
+            else
+            {
+                connectionString = _connectionStringProvider.GetConnectionString(connectionName);
+            }
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<DatabaseMetadataProvider>();
+            var metadataProvider = new DatabaseMetadataProvider(connectionString, logger);
+            var job = await metadataProvider.GetSqlServerAgentJobDetailsAsync(jobName, cts.Token);
+            return JsonSerializer.Serialize(job, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting SQL Server Agent job details for {JobName}", jobName);
+            return "{ \"error\": \"An error occurred while retrieving SQL Server Agent job details.\" }";
+        }
+    }
+
+    /// <summary>
     /// Converts a DataTable to JSON string
     /// </summary>
     /// <param name="dataTable">The DataTable to convert</param>
