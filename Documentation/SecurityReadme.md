@@ -16,6 +16,8 @@ All connection strings stored in the SQLite database are encrypted using AES-256
 To run the server with encryption enabled, use the provided script:
 
 ```powershell
+$env:MSSQL_MCP_KEY = "yourEncryptionKey"
+$env:MSSQL_MCP_API_KEY = "YourApiKey"
 ./Start-MCP-Encrypted.ps1
 ```
 
