@@ -17,6 +17,7 @@ bld/
 # Visual Studio / VS Code files
 .vs/
 .vscode/*
+.vscode/*.*
 *_i.c
 *_p.c
 *_h.h
