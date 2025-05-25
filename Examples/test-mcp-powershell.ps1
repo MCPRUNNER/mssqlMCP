@@ -3,7 +3,7 @@
 # This script demonstrates all available MCP tools and their proper usage
 
 # Define the API key - replace with your actual key from Set-Api-Key.ps1
-$apiKey = "pTUDn0e/FsqjCmyuZ4y76/tm8q3ISTC9NqMn4aM7fd4="
+$apiKey = "<your-api-key-here>"
 $connectionName = "DefaultConnection"
 # Base URL for the MCP server
 $baseUrl = "http://localhost:3001"
