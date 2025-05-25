@@ -137,4 +137,5 @@ artifacts/
 ScaffoldingReadMe.txt
 
 Scripts/Start-MCP-Encrypted-Local.ps1
-Examples/*.*
+Examples/initialize-mcp.js
+Examples/test*.*

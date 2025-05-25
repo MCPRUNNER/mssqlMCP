@@ -39,21 +39,36 @@ This project follows a clean architecture approach with separation of concerns:
 
 See the [full architecural documentation](./Documentation/Architecture.md) for diagrams and detailed process flow.
 
-### Folders Structure
+### Folder Structure
 
-- **Models**: Contains entity models for database metadata (TableInfo, ColumnInfo, ForeignKeyInfo)
-- **Interfaces**: Contains interfaces for services (IDatabaseMetadataProvider, IConnectionStringProvider, ISqlServerTools)
-- **Services**: Contains service implementations (DatabaseMetadataProvider)
-- **Configuration**: Contains configuration-related classes (ConnectionStringProvider)
-- **Tools**: Contains MCP tool implementations (SqlServerTools)
-- **Extensions**: Contains extension methods for service registration
+- **Models/**: Entity models for database metadata (TableInfo, ColumnInfo, ForeignKeyInfo, etc.)
+- **Interfaces/**: Service interfaces (IDatabaseMetadataProvider, IConnectionStringProvider, ISqlServerTools)
+- **Services/**: Service implementations (DatabaseMetadataProvider, ConnectionManager, ConnectionRepository)
+- **Configuration/**: Configuration-related classes (ConnectionStringProvider)
+- **Tools/**: MCP tool implementations (SqlServerTools, ConnectionManagerTool, SecurityTool)
+- **Extensions/**: Extension methods for service registration (ServiceCollectionExtensions, ApiSecurityExtensions)
+- **Middleware/**: Middleware components (ApiKeyAuthMiddleware)
+- **Scripts/**: Utility and management scripts (Start-MCP-Encrypted.ps1, Rotate-Encryption-Key.ps1, Migrate-To-Encrypted.ps1, Set-Api-Key.ps1, Assess-Connection-Security.ps1, Test-Connection.ps1, Test-Security-Features.ps1, Verify-Encryption-Status.ps1, mcp.json)
+- **Documentation/**: Architecture, security, usage, and API documentation
+- **Examples/**: Example scripts and usage (initialize-mcp.js, test-mcp-curl.sh, test-mcp-powershell.ps1)
+- **Logs/**: Log files (daily rolling logs)
+- **Tests/**: Test code
+- **Data/**: SQLite database for connection storage (connections.db)
+- **appsettings.json / appsettings.Development.json**: Application configuration
+- **Dockerfile**: Containerization support
+- **mssqlMCP.sln / mssqlMCP.csproj**: .NET solution and project files
+- **CopilotAgent.md / Overview.md**: Additional documentation
 
 ### Key Components
 
 - **DatabaseMetadataProvider**: Service for retrieving database schema information
 - **ConnectionStringProvider**: Service for managing database connection strings
+- **ConnectionManager**: Manages connection storage and retrieval
 - **SqlServerTools**: MCP tools implementation for SQL Server operations
+- **ConnectionManagerTool**: MCP tool for managing connections
+- **SecurityTool**: MCP tool for security operations (encryption, key rotation, etc.)
 - **ServiceCollectionExtensions**: Extension methods for registering services with dependency injection
+- **ApiKeyAuthMiddleware**: Middleware for API key authentication
 - SQL Server instance (local or remote)
 - Visual Studio Code with Copilot extension
 
