@@ -17,11 +17,6 @@ bld/
 # Visual Studio / VS Code files
 .vs/
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/mcp.json
 *_i.c
 *_p.c
 *_h.h
