@@ -1,0 +1,1106 @@
+openapi: 3.0.0
+info:
+  title: SQL Server MCP API
+  version: "1.0.0"
+  description: |
+    API for interacting with the SQL Server Model Context Protocol (MCP) server.
+    This server allows tools like GitHub Copilot to connect to SQL Server databases.
+    All operations are performed via JSON-RPC 2.0 over HTTP POST.
+
+servers:
+  - url: http://developer.rsyslab.com:3001
+    description: Developer MCP Server (from .vscode/mcp.json)
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key for authenticating requests (as configured in mcp.json and server).
+
+  schemas:
+    # Base JSON-RPC Structures
+    JsonRpcRequestBase:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          description: Specifies the version of the JSON-RPC protocol. MUST be "2.0".
+        id:
+          type: integer
+          format: int32
+          description: An identifier established by the Client that MUST contain a Number, String, or NULL value if included. If it is not included it is assumed to be a notification. The value SHOULD normally not be Null and Numbers SHOULD NOT contain fractional parts.
+        method:
+          type: string
+          description: A String containing the name of the method to be invoked.
+      required:
+        - jsonrpc
+        - id
+        - method
+
+    JsonRpcResponseBase:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          type: integer
+          format: int32
+      required:
+        - jsonrpc
+        - id
+
+    JsonRpcSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcResponseBase'
+        - type: object
+          properties:
+            result:
+              type: object
+              additionalProperties: true
+              description: The value of this member is determined by the method invoked on the Server. This member MUST be included on success.
+          required:
+            - result
+
+    JsonRpcErrorObject:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: A Number that indicates the error type that occurred.
+        message:
+          type: string
+          description: A String providing a short description of the error.
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: A Primitive or Structured value that contains additional information about the error. This may be omitted.
+      required:
+        - code
+        - message
+
+    JsonRpcErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcResponseBase'
+        - type: object
+          properties:
+            error:
+              $ref: '#/components/schemas/JsonRpcErrorObject'
+          required:
+            - error
+
+    # Tool: initialize
+    InitializeParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+    InitializeRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["initialize"]
+            params:
+              $ref: '#/components/schemas/InitializeParams'
+          required:
+            - method
+            - params
+      description: "Initialize a SQL Server connection."
+
+    # Tool: executeQuery
+    ExecuteQueryParams:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The SQL query to execute."
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        timeoutSeconds:
+          type: integer
+          format: int32
+          default: 30
+          description: "Query timeout in seconds."
+      required:
+        - query
+    ExecuteQueryRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["executeQuery"]
+            params:
+              $ref: '#/components/schemas/ExecuteQueryParams'
+          required:
+            - method
+            - params
+      description: "Run SQL queries and return results as JSON."
+
+    # Tool: getTableMetadata
+    GetTableMetadataParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter. If null, metadata for all schemas is returned."
+    GetTableMetadataRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getTableMetadata"]
+            params:
+              $ref: '#/components/schemas/GetTableMetadataParams'
+          required:
+            - method
+            - params
+      description: "Get metadata about database tables, columns, primary/foreign keys, and relationships."
+
+    # Tool: getDatabaseObjectsMetadata
+    GetDatabaseObjectsMetadataParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+        includeViews:
+          type: boolean
+          default: true
+          description: "Whether to include views in the results."
+    GetDatabaseObjectsMetadataRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getDatabaseObjectsMetadata"]
+            params:
+              $ref: '#/components/schemas/GetDatabaseObjectsMetadataParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed metadata about database objects including tables and views."
+
+    # Tool: getDatabaseObjectsByType
+    GetDatabaseObjectsByTypeParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+        objectType:
+          type: string
+          default: "ALL"
+          enum: ["TABLE", "VIEW", "PROCEDURE", "FUNCTION", "ALL"]
+          description: "Object type filter."
+    GetDatabaseObjectsByTypeRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getDatabaseObjectsByType"]
+            params:
+              $ref: '#/components/schemas/GetDatabaseObjectsByTypeParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed metadata about specific database object types."
+
+    # Tool: getSqlServerAgentJobs
+    GetSqlServerAgentJobsParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+    GetSqlServerAgentJobsRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSqlServerAgentJobs"]
+            params:
+              $ref: '#/components/schemas/GetSqlServerAgentJobsParams'
+          required:
+            - method
+            - params
+      description: "Gets SQL Server Agent job metadata from msdb."
+
+    # Tool: getSqlServerAgentJobDetails
+    GetSqlServerAgentJobDetailsParams:
+      type: object
+      properties:
+        jobName:
+          type: string
+          description: "The name of the SQL Server Agent job."
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+      required:
+        - jobName
+    GetSqlServerAgentJobDetailsRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSqlServerAgentJobDetails"]
+            params:
+              $ref: '#/components/schemas/GetSqlServerAgentJobDetailsParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed information about a specific SQL Server Agent job."
+
+    # Tool: getSsisCatalogInfo
+    GetSsisCatalogInfoParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+    GetSsisCatalogInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSsisCatalogInfo"]
+            params:
+              $ref: '#/components/schemas/GetSsisCatalogInfoParams'
+          required:
+            - method
+            - params
+      description: "Gets SSIS catalog information including folders, projects, and packages."
+
+    # Tool: getAzureDevOpsInfo
+    GetAzureDevOpsInfoParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use for Azure DevOps (TFS_Warehouse or similar)."
+    GetAzureDevOpsInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getAzureDevOpsInfo"]
+            params:
+              $ref: '#/components/schemas/GetAzureDevOpsInfoParams'
+          required:
+            - method
+            - params
+      description: "Gets Azure DevOps information including projects, repositories, builds, and work items."
+
+    # Tool: connectionManager/list
+    ConnectionManagerListRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/list"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "List all saved database connections."
+
+    # Tool: connectionManager/add
+    ConnectionManagerAddParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The unique name for the connection."
+        connectionString:
+          type: string
+          description: "The SQL Server connection string."
+        description:
+          type: string
+          nullable: true
+          description: "Optional description for the connection."
+      required:
+        - name
+        - connectionString
+    ConnectionManagerAddRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/add"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerAddParams'
+          required:
+            - method
+            - params
+      description: "Add a new database connection."
+
+    # Tool: connectionManager/update
+    ConnectionManagerUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name of the connection to update."
+        newConnectionString:
+          type: string
+          nullable: true
+          description: "The new connection string. If null, connection string is not changed."
+        newDescription:
+          type: string
+          nullable: true
+          description: "The new description. If null, description is not changed."
+      required:
+        - name
+    ConnectionManagerUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/update"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerUpdateParams'
+          required:
+            - method
+            - params
+      description: "Update an existing connection. At least one of newConnectionString or newDescription must be provided."
+
+    # Tool: connectionManager/remove
+    ConnectionManagerRemoveParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name of the connection to remove."
+      required:
+        - name
+    ConnectionManagerRemoveRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/remove"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerRemoveParams'
+          required:
+            - method
+            - params
+      description: "Remove a connection."
+
+    # Tool: testConnection (Note: CopilotAgent.md implies connectionManager/test, but f1e_TestConnection suggests root)
+    TestConnectionParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          description: "The name of the connection to test."
+      required:
+        - connectionName
+    TestConnectionRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["testConnection"] # Or "connectionManager/test"
+            params:
+              $ref: '#/components/schemas/TestConnectionParams'
+          required:
+            - method
+            - params
+      description: "Test connection string validity."
+
+    # Tool: security/rotateKey
+    SecurityRotateKeyRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["security/rotateKey"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "Rotate the encryption key for connection strings."
+
+    # Tool: security/generateSecureKey
+    SecurityGenerateSecureKeyRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["security/generateSecureKey"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "Generate a secure random key."
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    post:
+      summary: MCP JSON-RPC Endpoint
+      description: |
+        This single endpoint handles all MCP tool invocations.
+        The specific tool and its parameters are defined in the JSON-RPC request body.
+        Refer to the `requestBody` schema's `oneOf` section for details on each available method.
+      operationId: jsonRpcCall
+      requestBody:
+        description: JSON-RPC 2.0 Request object
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/InitializeRequest'
+                - $ref: '#/components/schemas/ExecuteQueryRequest'
+                - $ref: '#/components/schemas/GetTableMetadataRequest'
+                - $ref: '#/components/schemas/GetDatabaseObjectsMetadataRequest'
+                - $ref: '#/components/schemas/GetDatabaseObjectsByTypeRequest'
+                - $ref: '#/components/schemas/GetSqlServerAgentJobsRequest'
+                - $ref: '#/components/schemas/GetSqlServerAgentJobDetailsRequest'
+                - $ref: '#/components/schemas/GetSsisCatalogInfoRequest'
+                - $ref: '#/components/schemas/GetAzureDevOpsInfoRequest'
+                - $ref: '#/components/schemas/ConnectionManagerListRequest'
+                - $ref: '#/components/schemas/ConnectionManagerAddRequest'
+                - $ref: '#/components/schemas/ConnectionManagerUpdateRequest'
+                - $ref: '#/components/schemas/ConnectionManagerRemoveRequest'
+                - $ref: '#/components/schemas/TestConnectionRequest'
+                - $ref: '#/components/schemas/SecurityRotateKeyRequest'
+                - $ref: '#/components/schemas/SecurityGenerateSecureKeyRequest'
+      responses:
+        '200':
+          description: JSON-RPC Response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/JsonRpcSuccessResponse'
+                  - $ref: '#/components/schemas/JsonRpcErrorResponse'
+        '401':
+          description: Unauthorized. API Key is missing or invalid.
+        '403':
+          description: Forbidden. API Key is valid but does not have permission.
+```
+This OpenAPI schema defines the structure for your MCP server based on the tools found in your codebase (like [`Tools/SqlServerTools.cs`](Tools/SqlServerTools.cs)) and standard MCP practices for connection and security management. The server URL and API key information are taken from your [`.vscode/mcp.json`](.vscode/mcp.json) file. Each tool is represented as a specific request schema under the `oneOf` directive for the main JSON-RPC call.# filepath: openapi.yaml
+openapi: 3.0.0
+info:
+  title: SQL Server MCP API
+  version: "1.0.0"
+  description: |
+    API for interacting with the SQL Server Model Context Protocol (MCP) server.
+    This server allows tools like GitHub Copilot to connect to SQL Server databases.
+    All operations are performed via JSON-RPC 2.0 over HTTP POST.
+
+servers:
+  - url: http://developer.rsyslab.com:3001
+    description: Developer MCP Server (from .vscode/mcp.json)
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key for authenticating requests (as configured in mcp.json and server).
+
+  schemas:
+    # Base JSON-RPC Structures
+    JsonRpcRequestBase:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          description: Specifies the version of the JSON-RPC protocol. MUST be "2.0".
+        id:
+          type: integer
+          format: int32
+          description: An identifier established by the Client that MUST contain a Number, String, or NULL value if included. If it is not included it is assumed to be a notification. The value SHOULD normally not be Null and Numbers SHOULD NOT contain fractional parts.
+        method:
+          type: string
+          description: A String containing the name of the method to be invoked.
+      required:
+        - jsonrpc
+        - id
+        - method
+
+    JsonRpcResponseBase:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          type: integer
+          format: int32
+      required:
+        - jsonrpc
+        - id
+
+    JsonRpcSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcResponseBase'
+        - type: object
+          properties:
+            result:
+              type: object
+              additionalProperties: true
+              description: The value of this member is determined by the method invoked on the Server. This member MUST be included on success.
+          required:
+            - result
+
+    JsonRpcErrorObject:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: A Number that indicates the error type that occurred.
+        message:
+          type: string
+          description: A String providing a short description of the error.
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: A Primitive or Structured value that contains additional information about the error. This may be omitted.
+      required:
+        - code
+        - message
+
+    JsonRpcErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcResponseBase'
+        - type: object
+          properties:
+            error:
+              $ref: '#/components/schemas/JsonRpcErrorObject'
+          required:
+            - error
+
+    # Tool: initialize
+    InitializeParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+    InitializeRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["initialize"]
+            params:
+              $ref: '#/components/schemas/InitializeParams'
+          required:
+            - method
+            - params
+      description: "Initialize a SQL Server connection."
+
+    # Tool: executeQuery
+    ExecuteQueryParams:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The SQL query to execute."
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        timeoutSeconds:
+          type: integer
+          format: int32
+          default: 30
+          description: "Query timeout in seconds."
+      required:
+        - query
+    ExecuteQueryRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["executeQuery"]
+            params:
+              $ref: '#/components/schemas/ExecuteQueryParams'
+          required:
+            - method
+            - params
+      description: "Run SQL queries and return results as JSON."
+
+    # Tool: getTableMetadata
+    GetTableMetadataParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter. If null, metadata for all schemas is returned."
+    GetTableMetadataRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getTableMetadata"]
+            params:
+              $ref: '#/components/schemas/GetTableMetadataParams'
+          required:
+            - method
+            - params
+      description: "Get metadata about database tables, columns, primary/foreign keys, and relationships."
+
+    # Tool: getDatabaseObjectsMetadata
+    GetDatabaseObjectsMetadataParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+        includeViews:
+          type: boolean
+          default: true
+          description: "Whether to include views in the results."
+    GetDatabaseObjectsMetadataRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getDatabaseObjectsMetadata"]
+            params:
+              $ref: '#/components/schemas/GetDatabaseObjectsMetadataParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed metadata about database objects including tables and views."
+
+    # Tool: getDatabaseObjectsByType
+    GetDatabaseObjectsByTypeParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+        schema:
+          type: string
+          nullable: true
+          description: "Optional schema filter."
+        objectType:
+          type: string
+          default: "ALL"
+          enum: ["TABLE", "VIEW", "PROCEDURE", "FUNCTION", "ALL"]
+          description: "Object type filter."
+    GetDatabaseObjectsByTypeRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getDatabaseObjectsByType"]
+            params:
+              $ref: '#/components/schemas/GetDatabaseObjectsByTypeParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed metadata about specific database object types."
+
+    # Tool: getSqlServerAgentJobs
+    GetSqlServerAgentJobsParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+    GetSqlServerAgentJobsRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSqlServerAgentJobs"]
+            params:
+              $ref: '#/components/schemas/GetSqlServerAgentJobsParams'
+          required:
+            - method
+            - params
+      description: "Gets SQL Server Agent job metadata from msdb."
+
+    # Tool: getSqlServerAgentJobDetails
+    GetSqlServerAgentJobDetailsParams:
+      type: object
+      properties:
+        jobName:
+          type: string
+          description: "The name of the SQL Server Agent job."
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+      required:
+        - jobName
+    GetSqlServerAgentJobDetailsRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSqlServerAgentJobDetails"]
+            params:
+              $ref: '#/components/schemas/GetSqlServerAgentJobDetailsParams'
+          required:
+            - method
+            - params
+      description: "Gets detailed information about a specific SQL Server Agent job."
+
+    # Tool: getSsisCatalogInfo
+    GetSsisCatalogInfoParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use."
+    GetSsisCatalogInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getSsisCatalogInfo"]
+            params:
+              $ref: '#/components/schemas/GetSsisCatalogInfoParams'
+          required:
+            - method
+            - params
+      description: "Gets SSIS catalog information including folders, projects, and packages."
+
+    # Tool: getAzureDevOpsInfo
+    GetAzureDevOpsInfoParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          default: "DefaultConnection"
+          description: "The name of the connection string to use for Azure DevOps (TFS_Warehouse or similar)."
+    GetAzureDevOpsInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["getAzureDevOpsInfo"]
+            params:
+              $ref: '#/components/schemas/GetAzureDevOpsInfoParams'
+          required:
+            - method
+            - params
+      description: "Gets Azure DevOps information including projects, repositories, builds, and work items."
+
+    # Tool: connectionManager/list
+    ConnectionManagerListRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/list"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "List all saved database connections."
+
+    # Tool: connectionManager/add
+    ConnectionManagerAddParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The unique name for the connection."
+        connectionString:
+          type: string
+          description: "The SQL Server connection string."
+        description:
+          type: string
+          nullable: true
+          description: "Optional description for the connection."
+      required:
+        - name
+        - connectionString
+    ConnectionManagerAddRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/add"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerAddParams'
+          required:
+            - method
+            - params
+      description: "Add a new database connection."
+
+    # Tool: connectionManager/update
+    ConnectionManagerUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name of the connection to update."
+        newConnectionString:
+          type: string
+          nullable: true
+          description: "The new connection string. If null, connection string is not changed."
+        newDescription:
+          type: string
+          nullable: true
+          description: "The new description. If null, description is not changed."
+      required:
+        - name
+    ConnectionManagerUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/update"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerUpdateParams'
+          required:
+            - method
+            - params
+      description: "Update an existing connection. At least one of newConnectionString or newDescription must be provided."
+
+    # Tool: connectionManager/remove
+    ConnectionManagerRemoveParams:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name of the connection to remove."
+      required:
+        - name
+    ConnectionManagerRemoveRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["connectionManager/remove"]
+            params:
+              $ref: '#/components/schemas/ConnectionManagerRemoveParams'
+          required:
+            - method
+            - params
+      description: "Remove a connection."
+
+    # Tool: testConnection (Note: CopilotAgent.md implies connectionManager/test, but f1e_TestConnection suggests root)
+    TestConnectionParams:
+      type: object
+      properties:
+        connectionName:
+          type: string
+          description: "The name of the connection to test."
+      required:
+        - connectionName
+    TestConnectionRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["testConnection"] # Or "connectionManager/test"
+            params:
+              $ref: '#/components/schemas/TestConnectionParams'
+          required:
+            - method
+            - params
+      description: "Test connection string validity."
+
+    # Tool: security/rotateKey
+    SecurityRotateKeyRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["security/rotateKey"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "Rotate the encryption key for connection strings."
+
+    # Tool: security/generateSecureKey
+    SecurityGenerateSecureKeyRequest:
+      allOf:
+        - $ref: '#/components/schemas/JsonRpcRequestBase'
+        - type: object
+          properties:
+            method:
+              type: string
+              enum: ["security/generateSecureKey"]
+            params:
+              type: object
+              nullable: true # No parameters
+          required:
+            - method
+      description: "Generate a secure random key."
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    post:
+      summary: MCP JSON-RPC Endpoint
+      description: |
+        This single endpoint handles all MCP tool invocations.
+        The specific tool and its parameters are defined in the JSON-RPC request body.
+        Refer to the `requestBody` schema's `oneOf` section for details on each available method.
+      operationId: jsonRpcCall
+      requestBody:
+        description: JSON-RPC 2.0 Request object
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/InitializeRequest'
+                - $ref: '#/components/schemas/ExecuteQueryRequest'
+                - $ref: '#/components/schemas/GetTableMetadataRequest'
+                - $ref: '#/components/schemas/GetDatabaseObjectsMetadataRequest'
+                - $ref: '#/components/schemas/GetDatabaseObjectsByTypeRequest'
+                - $ref: '#/components/schemas/GetSqlServerAgentJobsRequest'
+                - $ref: '#/components/schemas/GetSqlServerAgentJobDetailsRequest'
+                - $ref: '#/components/schemas/GetSsisCatalogInfoRequest'
+                - $ref: '#/components/schemas/GetAzureDevOpsInfoRequest'
+                - $ref: '#/components/schemas/ConnectionManagerListRequest'
+                - $ref: '#/components/schemas/ConnectionManagerAddRequest'
+                - $ref: '#/components/schemas/ConnectionManagerUpdateRequest'
+                - $ref: '#/components/schemas/ConnectionManagerRemoveRequest'
+                - $ref: '#/components/schemas/TestConnectionRequest'
+                - $ref: '#/components/schemas/SecurityRotateKeyRequest'
+                - $ref: '#/components/schemas/SecurityGenerateSecureKeyRequest'
+      responses:
+        '200':
+          description: JSON-RPC Response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/JsonRpcSuccessResponse'
+                  - $ref: '#/components/schemas/JsonRpcErrorResponse'
+        '401':
+          description: Unauthorized. API Key is missing or invalid.
+        '403':
+          description: Forbidden. API Key is valid but does not have permission.
+```
+This OpenAPI schema defines the structure for your MCP server based on the tools found in your codebase (like [`Tools/SqlServerTools.cs`](Tools/SqlServerTools.cs)) and standard MCP practices for connection and security management. The server URL and API key information are taken from your [`.vscode/mcp.json`](.vscode/mcp.json) file. Each tool is represented as a specific request schema under the `oneOf` directive for the main JSON-RPC call.

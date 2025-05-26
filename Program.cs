@@ -21,11 +21,37 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add MCP services
-builder.Services.AddMcpServer()
-    .WithHttpTransport()
+
+var myTransportType = Environment.GetEnvironmentVariable("MSSQL_MCP_TRANSPORT") ??
+                      "Http";
+
+if (myTransportType.Equals("Http", StringComparison.OrdinalIgnoreCase))
+{
+    Log.Information("Using HTTP transport for MCP server.");
+    builder.Services.AddMcpServer().WithHttpTransport()
     .WithTools<SqlServerTools>()
     .WithTools<ConnectionManagerTool>()
-    .WithTools<SecurityTool>();  // Add our SecurityTool
+    .WithTools<SecurityTool>();
+
+}
+else if (myTransportType.Equals("Stdio", StringComparison.OrdinalIgnoreCase))
+{
+    Log.Information("Using Stdio transport for MCP server.");
+    builder.Services.AddMcpServer().WithStdioServerTransport()
+        .WithTools<SqlServerTools>()
+    .WithTools<ConnectionManagerTool>()
+    .WithTools<SecurityTool>();
+}
+else
+{
+    Log.Error($"Invalid MSSQL_MCP_TRANSPORT_TYPE: {myTransportType}. Defaulting to HTTP transport.");
+    builder.Services.AddMcpServer().WithHttpTransport()
+    .WithTools<SqlServerTools>()
+    .WithTools<ConnectionManagerTool>()
+    .WithTools<SecurityTool>();
+}
+
+
 
 // Add our SQL Server MCP services
 builder.Services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
@@ -247,7 +273,10 @@ app.UseExceptionHandler(appError =>
     });
 });
 
-app.MapMcp();
+if (myTransportType.Equals("Http", StringComparison.OrdinalIgnoreCase))
+{
+    app.MapMcp();
+}
 
 // Run the application
 app.Lifetime.ApplicationStarted.Register(() => Log.Information("SQL Server MCP Server started"));
