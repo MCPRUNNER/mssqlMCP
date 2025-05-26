@@ -44,7 +44,7 @@ else if (myTransportType.Equals("Stdio", StringComparison.OrdinalIgnoreCase))
 }
 else
 {
-    Log.Error($"Invalid MSSQL_MCP_TRANSPORT_TYPE: {myTransportType}. Defaulting to HTTP transport.");
+    Log.Error($"Invalid MSSQL_MCP_TRANSPORT: {myTransportType}. Defaulting to HTTP transport.");
     builder.Services.AddMcpServer().WithHttpTransport()
     .WithTools<SqlServerTools>()
     .WithTools<ConnectionManagerTool>()
