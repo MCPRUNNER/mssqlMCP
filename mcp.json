@@ -10,8 +10,8 @@
    "servers": {
        
         
-  "developer-server-mcp": {
-            "url": "http://developer.rsyslab.com:3001",
+  "mssqlmcp": {
+            "url": "http://localhost:3001",
             "headers": {
                 "X-API-Key": "${input:mssql-server-mcp-api-key}"    ,
                 "Content-Type": "application/json"

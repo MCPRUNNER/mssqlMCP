@@ -132,3 +132,4 @@ ScaffoldingReadMe.txt
 
 Scripts/Start-MCP-Encrypted-Local.ps1
 Examples/*.*
+/.vscode/mcp.json
