@@ -273,7 +273,7 @@ app.UseExceptionHandler(appError =>
     });
 });
 
-if (myTransportType.Equals("Http", StringComparison.OrdinalIgnoreCase))
+if (!myTransportType.Equals("Stdio", StringComparison.OrdinalIgnoreCase))
 {
     app.MapMcp();
 }
