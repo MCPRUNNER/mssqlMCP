@@ -29,6 +29,14 @@ See [How This Works](./Documentation/HowItWorks.md) for an overview of communica
 
 - .NET 9.0 SDK
 
+### Runtime Overrides
+
+| Variable Name       | Default Value                                                                                                                                                                                                         | Optional Values (Expected Format/Type)                                             | Description                                                                                                                               |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| `MSSQL_MCP_KEY`     | An insecure default key is used if not set and `Start-MCP-Encrypted.ps1` is not run. The script generates a secure random key if this variable is unset.                                                              | A strong, cryptographically secure random string (e.g., 32 bytes, Base64 encoded). | The master encryption key used for AES-256 encryption of connection strings stored in the `connections.db` SQLite database.               |
+| `MSSQL_MCP_API_KEY` | None explicitly mentioned for the environment variable itself. If not set, API key authentication might be disabled or fall back to appsettings.json if configured there. The `Set-Api-Key.ps1` script generates one. | A strong, cryptographically secure random string.                                  | The API key required for client applications to authenticate with the MCP server when API key authentication is enabled via HTTP headers. |
+| `MSSQL_MCP_DATA`    | Data (A Data subdirectory in the application's root directory)                                                                                                                                                        | A valid file system path to a directory.                                           | Overrides the default directory location for storing application data, most notably the `connections.db` SQLite database file.            |
+
 ### TL;DR The Quick Setup Doc
 
 [QUICK_INSTALL](./Documentation/QUICK_INSTALL.md)
