@@ -68,8 +68,8 @@ public class ConnectionManagerTool
             };
         }
     }    /// <summary>
-    /// Test a connection string
-    /// </summary>
+         /// Test a connection string
+         /// </summary>
     [McpServerTool, Description("Test a database connection.")]
     public async Task<TestConnectionResponse> TestConnectionAsync(TestConnectionRequest request)
     {
@@ -119,8 +119,8 @@ public class ConnectionManagerTool
             };
         }
     }    /// <summary>
-    /// Add a new connection
-    /// </summary>
+         /// Add a new connection
+         /// </summary>
     [McpServerTool, Description("Add a new database connection.")]
     public async Task<AddConnectionResponse> AddConnectionAsync(AddConnectionRequest request)
     {
@@ -187,8 +187,8 @@ public class ConnectionManagerTool
             };
         }
     }    /// <summary>
-    /// Update an existing connection
-    /// </summary>
+         /// Update an existing connection
+         /// </summary>
     [McpServerTool, Description("Update an existing database connection.")]
     public async Task<UpdateConnectionResponse> UpdateConnectionAsync(UpdateConnectionRequest request)
     {
@@ -246,8 +246,8 @@ public class ConnectionManagerTool
             };
         }
     }    /// <summary>
-    /// Remove a connection
-    /// </summary>
+         /// Remove a connection
+         /// </summary>
     [McpServerTool, Description("Remove a database connection.")]
     public async Task<RemoveConnectionResponse> RemoveConnectionAsync(RemoveConnectionRequest request)
     {

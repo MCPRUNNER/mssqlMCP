@@ -29,8 +29,8 @@ public class SecurityTool
         _keyRotationService = keyRotationService;
         _encryptionService = encryptionService;
     }    /// <summary>
-    /// Rotate the encryption key for all connection strings
-    /// </summary>
+         /// Rotate the encryption key for all connection strings
+         /// </summary>
     [McpServerTool, Description("Rotate encryption key for connection strings")]
     public async Task<object> RotateKeyAsync(string newKey)
     {
@@ -88,8 +88,8 @@ public class SecurityTool
             throw;
         }
     }    /// <summary>
-    /// Generate a secure random key for encryption
-    /// </summary>
+         /// Generate a secure random key for encryption
+         /// </summary>
     [McpServerTool, Description("Generate a secure random key for connection string encryption")]
     public object GenerateSecureKey(int length = 32)
     {

@@ -64,7 +64,8 @@ public class InputValidatorTests
         var result = InputValidator.ValidateSchemaName(longSchema);
 
         // Assert
-        Assert.False(result.IsValid);    }
+        Assert.False(result.IsValid);
+    }
 
     [Fact]
     public void ValidateQuery_WithValidQueries_ShouldReturnValid()
@@ -97,7 +98,8 @@ public class InputValidatorTests
         var result = InputValidator.ValidateConnectionString(connectionString);
 
         // Assert
-        Assert.Equal(expectedValid, result.IsValid);    }
+        Assert.Equal(expectedValid, result.IsValid);
+    }
 
     [Fact]
     public void ValidateDescription_WithValidDescriptions_ShouldReturnValid()
@@ -118,7 +120,9 @@ public class InputValidatorTests
         var result = InputValidator.ValidateDescription(longDescription);
 
         // Assert
-        Assert.False(result.IsValid);    }    [Fact]
+        Assert.False(result.IsValid);
+    }
+    [Fact]
     public void ValidateEncryptionKey_WithValidKeys_ShouldReturnValid()
     {
         // Arrange & Act & Assert
@@ -134,7 +138,7 @@ public class InputValidatorTests
         Assert.False(InputValidator.ValidateEncryptionKey(null).IsValid);
         Assert.False(InputValidator.ValidateEncryptionKey("weak").IsValid);
         Assert.False(InputValidator.ValidateEncryptionKey("weakkeywithoutcomplexity").IsValid);
-        
+
         var longKey = new string('a', 257);
         Assert.False(InputValidator.ValidateEncryptionKey(longKey).IsValid);
     }

@@ -36,23 +36,26 @@ public static class InputValidator
     /// </summary>
     public class ValidationResult
     {
-        public bool IsValid { get; set; }
+        public bool IsValid
+        {
+            get; set;
+        }
         public List<string> Errors { get; set; } = new();
-        
+
         public string ErrorMessage => string.Join("; ", Errors);
-        
+
         public static ValidationResult Success() => new() { IsValid = true };
-        
-        public static ValidationResult Failure(string error) => new() 
-        { 
-            IsValid = false, 
-            Errors = { error } 
+
+        public static ValidationResult Failure(string error) => new()
+        {
+            IsValid = false,
+            Errors = { error }
         };
-        
-        public static ValidationResult Failure(IEnumerable<string> errors) => new() 
-        { 
-            IsValid = false, 
-            Errors = errors.ToList() 
+
+        public static ValidationResult Failure(IEnumerable<string> errors) => new()
+        {
+            IsValid = false,
+            Errors = errors.ToList()
         };
     }
 
@@ -186,7 +189,7 @@ public static class InputValidator
             return ValidationResult.Success(); // Object type is optional, defaults to "ALL"
 
         var validTypes = new[] { "TABLE", "TABLES", "VIEW", "VIEWS", "PROCEDURE", "PROCEDURES", "FUNCTION", "FUNCTIONS", "ALL" };
-        
+
         if (!validTypes.Contains(objectType, StringComparer.OrdinalIgnoreCase))
             return ValidationResult.Failure($"Object type must be one of: {string.Join(", ", validTypes)}");
 
@@ -226,10 +229,10 @@ public static class InputValidator
     public static ValidationResult Combine(params ValidationResult[] results)
     {
         var errors = results.Where(r => !r.IsValid).SelectMany(r => r.Errors).ToList();
-        
+
         if (errors.Any())
             return ValidationResult.Failure(errors);
-        
+
         return ValidationResult.Success();
     }
 
@@ -241,7 +244,7 @@ public static class InputValidator
         var hasLetter = input.Any(char.IsLetter);
         var hasDigit = input.Any(char.IsDigit);
         var hasSpecial = input.Any(c => !char.IsLetterOrDigit(c));
-        
+
         return hasLetter && (hasDigit || hasSpecial);
     }
 }

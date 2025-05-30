@@ -53,27 +53,27 @@ public static class ValidationExtensions
         out T? errorResponse) where T : class
     {
         errorResponse = null;
-        
+
         if (validationResult.IsValid)
             return false; // Continue processing
 
         logger.LogValidationErrors(validationResult, context);
-        
+
         // Try to create a response object with Success=false and Message properties
         try
         {
             var responseType = typeof(T);
             var response = Activator.CreateInstance<T>();
-            
+
             var successProperty = responseType.GetProperty("Success");
             var messageProperty = responseType.GetProperty("Message");
-            
+
             if (successProperty != null && successProperty.PropertyType == typeof(bool))
                 successProperty.SetValue(response, false);
-                
+
             if (messageProperty != null && messageProperty.PropertyType == typeof(string))
                 messageProperty.SetValue(response, validationResult.ErrorMessage);
-                
+
             errorResponse = response;
         }
         catch
@@ -81,7 +81,7 @@ public static class ValidationExtensions
             // If we can't create the response object, leave it null
             errorResponse = null;
         }
-        
+
         return true; // Stop processing, return error
     }
 }
@@ -92,8 +92,11 @@ public static class ValidationExtensions
 [AttributeUsage(AttributeTargets.Parameter)]
 public class ValidateAttribute : Attribute
 {
-    public string ValidationType { get; }
-    
+    public string ValidationType
+    {
+        get;
+    }
+
     public ValidateAttribute(string validationType)
     {
         ValidationType = validationType;

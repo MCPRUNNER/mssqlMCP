@@ -35,8 +35,8 @@ public class SqlServerTools : ISqlServerTools
         _connectionStringProvider = connectionStringProvider;
         _connectionManager = connectionManager;
     }    /// <summary>
-    /// Initialize the SQL Server connection
-    /// </summary>
+         /// Initialize the SQL Server connection
+         /// </summary>
     [McpServerTool, Description("Initialize the SQL Server connection.")]
     public async Task<string> Initialize(string connectionName = "DefaultConnection")
     {
@@ -149,8 +149,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An unexpected error occurred while executing query.\" }";
         }
     }    /// <summary>
-    /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
-    /// </summary>
+         /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
+         /// </summary>
     [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
     public async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
     {
@@ -222,8 +222,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An unexpected error occurred while retrieving table metadata.\" }";
         }
     }    /// <summary>
-    /// Gets detailed metadata about database objects including tables and views
-    /// </summary>
+         /// Gets detailed metadata about database objects including tables and views
+         /// </summary>
     [McpServerTool, Description("Gets detailed metadata about database objects including tables and views.")]
     public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, bool includeViews = true)
     {
@@ -302,8 +302,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
         }
     }    /// <summary>
-    /// Gets detailed metadata about specific database object types (tables or views)
-    /// </summary>
+         /// Gets detailed metadata about specific database object types (tables or views)
+         /// </summary>
     [McpServerTool, Description("Gets detailed metadata about specific database object types.")]
     public async Task<string> GetDatabaseObjectsByType(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
     {
@@ -398,8 +398,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
         }
     }    /// <summary>
-    /// Gets SQL Server Agent job metadata from msdb
-    /// </summary>
+         /// Gets SQL Server Agent job metadata from msdb
+         /// </summary>
     [McpServerTool, Description("Gets SQL Server Agent job metadata (jobs, status, owner, etc.) from msdb.")]
     public async Task<string> GetSqlServerAgentJobs(string connectionName = "DefaultConnection")
     {
@@ -438,14 +438,14 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An error occurred while retrieving SQL Server Agent jobs.\" }";
         }
     }    /// <summary>
-    /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
-    /// </summary>
+         /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
+         /// </summary>
     [McpServerTool, Description("Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job.")]
     public async Task<string> GetSqlServerAgentJobDetails(string jobName, string connectionName = "DefaultConnection")
     {
         // Validate input parameters
         var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
-        var jobNameValidation = string.IsNullOrWhiteSpace(jobName) 
+        var jobNameValidation = string.IsNullOrWhiteSpace(jobName)
             ? InputValidator.ValidationResult.Failure("Job name cannot be null or empty")
             : InputValidator.ValidationResult.Success();
         var combinedValidation = InputValidator.Combine(connectionValidation, jobNameValidation);
@@ -483,8 +483,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An error occurred while retrieving SQL Server Agent job details.\" }";
         }
     }    /// <summary>
-    /// Gets SSIS catalog information including Project Deployment and Package Deployment models
-    /// </summary>
+         /// Gets SSIS catalog information including Project Deployment and Package Deployment models
+         /// </summary>
     [McpServerTool, Description("Gets SSIS catalog information including Project Deployment and Package Deployment models.")]
     public async Task<string> GetSsisCatalogInfo(string connectionName = "DefaultConnection")
     {
@@ -523,8 +523,8 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An error occurred while retrieving SSIS catalog information. The catalog may not exist on this server or you may not have sufficient permissions.\" }";
         }
     }    /// <summary>    /// <summary>
-    /// Gets Azure DevOps information including projects, repositories, builds, and work items
-    /// </summary>
+         /// Gets Azure DevOps information including projects, repositories, builds, and work items
+         /// </summary>
     [McpServerTool, Description("Gets Azure DevOps information including projects, repositories, builds, and work items.")]
     public async Task<string> GetAzureDevOpsInfo(string connectionName = "DefaultConnection")
     {
