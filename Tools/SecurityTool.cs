@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
+using mssqlMCP.Validation;
 
 namespace mssqlMCP.Tools;
 
@@ -27,32 +28,34 @@ public class SecurityTool
         _logger = logger;
         _keyRotationService = keyRotationService;
         _encryptionService = encryptionService;
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Rotate the encryption key for all connection strings
     /// </summary>
     [McpServerTool, Description("Rotate encryption key for connection strings")]
     public async Task<object> RotateKeyAsync(string newKey)
     {
+        // Validate input parameters
+        var validationResult = InputValidator.ValidateEncryptionKey(newKey);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid encryption key: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            throw new ArgumentException(errorMessage);
+        }
+
         _logger.LogInformation("Request to rotate encryption key received");
 
         try
-        {
-            if (string.IsNullOrEmpty(newKey))
-            {
-                throw new ArgumentException("New key cannot be empty");
-            }
-
-            // Perform key rotation
-            int count = await _keyRotationService.RotateKeyAsync(newKey);
+        {            // Perform key rotation
+            var count = await _keyRotationService.RotateKeyAsync(newKey);
 
             // Return success response
-            return new
+            var result = new
             {
                 count,
                 message = "Encryption key rotated successfully. Restart the server with the new key."
             };
+            return result;
         }
         catch (Exception ex)
         {
@@ -68,49 +71,50 @@ public class SecurityTool
         _logger.LogInformation("Request to migrate unencrypted connections received");
 
         try
-        {
-            // Perform migration
-            int count = await _keyRotationService.MigrateUnencryptedConnectionsAsync();
+        {            // Perform migration
+            var count = await _keyRotationService.MigrateUnencryptedConnectionsAsync();
 
             // Return success response
-            return new
+            var result = new
             {
                 count,
                 message = $"Successfully migrated {count} connection strings to encrypted format"
             };
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error migrating connections to encrypted format");
             throw;
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Generate a secure random key for encryption
     /// </summary>
     [McpServerTool, Description("Generate a secure random key for connection string encryption")]
     public object GenerateSecureKey(int length = 32)
     {
+        // Validate input parameters
+        if (length < 16 || length > 64)
+        {
+            var errorMessage = "Key length must be between 16 and 64 bytes";
+            _logger.LogError(errorMessage);
+            throw new ArgumentException(errorMessage, nameof(length));
+        }
+
         _logger.LogInformation("Request to generate secure key received");
 
         try
-        {
-            if (length < 16 || length > 64)
-            {
-                throw new ArgumentException("Key length must be between 16 and 64 bytes", nameof(length));
-            }
-
-            // Generate a secure key
-            string key = _encryptionService.GenerateSecureKey(length);
+        {            // Generate a secure key
+            var key = _encryptionService.GenerateSecureKey(length);
 
             // Return the generated key
-            return new
+            var result = new
             {
                 key,
                 length,
                 message = "Generated a new secure encryption key. Use this key with the MSSQL_MCP_KEY environment variable."
             };
+            return result;
         }
         catch (Exception ex)
         {

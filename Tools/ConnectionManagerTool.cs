@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using mssqlMCP.Validation;
 
 namespace mssqlMCP.Tools;
 
@@ -66,14 +67,35 @@ public class ConnectionManagerTool
                 ErrorMessage = "Failed to retrieve connections: " + ex.Message
             };
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Test a connection string
     /// </summary>
     [McpServerTool, Description("Test a database connection.")]
     public async Task<TestConnectionResponse> TestConnectionAsync(TestConnectionRequest request)
     {
+        // Validate input parameters
+        if (request == null)
+        {
+            _logger.LogError("TestConnectionRequest cannot be null");
+            return new TestConnectionResponse
+            {
+                Success = false,
+                Message = "Request cannot be null"
+            };
+        }
+
+        var validationResult = InputValidator.ValidateConnectionString(request.ConnectionString);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection string: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return new TestConnectionResponse
+            {
+                Success = false,
+                Message = errorMessage
+            };
+        }
+
         try
         {
             _logger.LogInformation("Testing connection string");
@@ -96,29 +118,42 @@ public class ConnectionManagerTool
                 Message = "Connection test failed: " + ex.Message
             };
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Add a new connection
     /// </summary>
     [McpServerTool, Description("Add a new database connection.")]
     public async Task<AddConnectionResponse> AddConnectionAsync(AddConnectionRequest request)
     {
+        // Validate input parameters
+        if (request == null)
+        {
+            _logger.LogError("AddConnectionRequest cannot be null");
+            return new AddConnectionResponse
+            {
+                Success = false,
+                Message = "Request cannot be null"
+            };
+        }
+
+        var nameValidation = InputValidator.ValidateConnectionName(request.Name);
+        var connectionStringValidation = InputValidator.ValidateConnectionString(request.ConnectionString);
+        var descriptionValidation = InputValidator.ValidateDescription(request.Description);
+        var combinedValidation = InputValidator.Combine(nameValidation, connectionStringValidation, descriptionValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return new AddConnectionResponse
+            {
+                Success = false,
+                Message = errorMessage
+            };
+        }
+
         try
         {
-            _logger.LogInformation("Adding connection: {ConnectionName}", request.Name);
-
-            // Check if name is valid
-            if (string.IsNullOrWhiteSpace(request.Name))
-            {
-                return new AddConnectionResponse
-                {
-                    Success = false,
-                    Message = "Connection name cannot be empty"
-                };
-            }
-
-            // Check if connection with this name already exists
+            _logger.LogInformation("Adding connection: {ConnectionName}", request.Name);            // Check if connection with this name already exists
             var existing = await _connectionManager.GetConnectionEntryAsync(request.Name);
             if (existing != null)
             {
@@ -151,14 +186,39 @@ public class ConnectionManagerTool
                 Message = "Failed to add connection: " + ex.Message
             };
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Update an existing connection
     /// </summary>
     [McpServerTool, Description("Update an existing database connection.")]
     public async Task<UpdateConnectionResponse> UpdateConnectionAsync(UpdateConnectionRequest request)
     {
+        // Validate input parameters
+        if (request == null)
+        {
+            _logger.LogError("UpdateConnectionRequest cannot be null");
+            return new UpdateConnectionResponse
+            {
+                Success = false,
+                Message = "Request cannot be null"
+            };
+        }
+
+        var nameValidation = InputValidator.ValidateConnectionName(request.Name);
+        var connectionStringValidation = InputValidator.ValidateConnectionString(request.ConnectionString);
+        var descriptionValidation = InputValidator.ValidateDescription(request.Description);
+        var combinedValidation = InputValidator.Combine(nameValidation, connectionStringValidation, descriptionValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return new UpdateConnectionResponse
+            {
+                Success = false,
+                Message = errorMessage
+            };
+        }
+
         try
         {
             _logger.LogInformation("Updating connection: {ConnectionName}", request.Name);
@@ -185,14 +245,35 @@ public class ConnectionManagerTool
                 Message = "Failed to update connection: " + ex.Message
             };
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Remove a connection
     /// </summary>
     [McpServerTool, Description("Remove a database connection.")]
     public async Task<RemoveConnectionResponse> RemoveConnectionAsync(RemoveConnectionRequest request)
     {
+        // Validate input parameters
+        if (request == null)
+        {
+            _logger.LogError("RemoveConnectionRequest cannot be null");
+            return new RemoveConnectionResponse
+            {
+                Success = false,
+                Message = "Request cannot be null"
+            };
+        }
+
+        var validationResult = InputValidator.ValidateConnectionName(request.Name);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection name: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return new RemoveConnectionResponse
+            {
+                Success = false,
+                Message = errorMessage
+            };
+        }
+
         try
         {
             _logger.LogInformation("Removing connection: {ConnectionName}", request.Name);

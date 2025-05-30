@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using mssqlMCP.Interfaces;
 using mssqlMCP.Services;
+using mssqlMCP.Validation;
 
 namespace mssqlMCP.Tools;
 
@@ -33,12 +34,20 @@ public class SqlServerTools : ISqlServerTools
         _logger = logger;
         _connectionStringProvider = connectionStringProvider;
         _connectionManager = connectionManager;
-    }        /// <summary>
-             /// Initialize the SQL Server connection
-             /// </summary>
+    }    /// <summary>
+    /// Initialize the SQL Server connection
+    /// </summary>
     [McpServerTool, Description("Initialize the SQL Server connection.")]
     public async Task<string> Initialize(string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var validationResult = InputValidator.ValidateConnectionName(connectionName);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection name: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return errorMessage;
+        }
         try
         {
             // Create a cancellation token source with a reasonable timeout
@@ -76,14 +85,24 @@ public class SqlServerTools : ISqlServerTools
             return $"An unexpected error occurred while connecting to the database.";
         }
     }
-
-
     /// <summary>
     /// Executes a SQL query and returns the results as JSON
     /// </summary>
     [McpServerTool, Description("Executes a SQL query and returns the results as JSON.")]
     public async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
+        var queryValidation = InputValidator.ValidateQuery(query);
+        var combinedValidation = InputValidator.Combine(connectionValidation, queryValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation($"Executing query: {query}");
 
         // Create a cancellation token source with a reasonable timeout for database operations
@@ -129,12 +148,24 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, $"Error executing query: {query}");
             return "{ \"error\": \"An unexpected error occurred while executing query.\" }";
         }
-    }        /// <summary>
-             /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
-             /// </summary>
+    }    /// <summary>
+    /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
+    /// </summary>
     [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
     public async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
     {
+        // Validate input parameters
+        var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
+        var schemaValidation = InputValidator.ValidateSchemaName(schema);
+        var combinedValidation = InputValidator.Combine(connectionValidation, schemaValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting table metadata for connection: {ConnectionName}, schema: {Schema}", connectionName, schema ?? "all schemas");
 
         // Create a cancellation token source with a reasonable timeout
@@ -190,12 +221,25 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting table metadata");
             return "{ \"error\": \"An unexpected error occurred while retrieving table metadata.\" }";
         }
-    }        /// <summary>
-             /// Gets detailed metadata about database objects including tables and views
-             /// </summary>
+    }    /// <summary>
+    /// Gets detailed metadata about database objects including tables and views
+    /// </summary>
     [McpServerTool, Description("Gets detailed metadata about database objects including tables and views.")]
     public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, bool includeViews = true)
     {
+        // Validate input parameters
+        var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
+        var schemaValidation = InputValidator.ValidateSchemaName(schema);
+        var booleanValidation = InputValidator.ValidateBoolean(includeViews, nameof(includeViews));
+        var combinedValidation = InputValidator.Combine(connectionValidation, schemaValidation, booleanValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting database objects metadata for connection: {ConnectionName}, schema: {Schema}, includeViews: {IncludeViews}",
             connectionName, schema ?? "all schemas", includeViews);
 
@@ -258,11 +302,24 @@ public class SqlServerTools : ISqlServerTools
             return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
         }
     }    /// <summary>
-         /// Gets detailed metadata about specific database object types (tables or views)
-         /// </summary>
+    /// Gets detailed metadata about specific database object types (tables or views)
+    /// </summary>
     [McpServerTool, Description("Gets detailed metadata about specific database object types.")]
     public async Task<string> GetDatabaseObjectsByType(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
     {
+        // Validate input parameters
+        var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
+        var schemaValidation = InputValidator.ValidateSchemaName(schema);
+        var objectTypeValidation = InputValidator.ValidateObjectType(objectType);
+        var combinedValidation = InputValidator.Combine(connectionValidation, schemaValidation, objectTypeValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting database objects metadata for connection: {ConnectionName}, schema: {Schema}, objectType: {ObjectType}",
             connectionName, schema ?? "all schemas", objectType);
 
@@ -340,14 +397,21 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting database objects metadata");
             return "{ \"error\": \"An unexpected error occurred while retrieving database objects metadata.\" }";
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Gets SQL Server Agent job metadata from msdb
     /// </summary>
     [McpServerTool, Description("Gets SQL Server Agent job metadata (jobs, status, owner, etc.) from msdb.")]
     public async Task<string> GetSqlServerAgentJobs(string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var validationResult = InputValidator.ValidateConnectionName(connectionName);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection name: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting SQL Server Agent jobs for connection: {ConnectionName}", connectionName);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         try
@@ -373,14 +437,26 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting SQL Server Agent jobs");
             return "{ \"error\": \"An error occurred while retrieving SQL Server Agent jobs.\" }";
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job
     /// </summary>
     [McpServerTool, Description("Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job.")]
     public async Task<string> GetSqlServerAgentJobDetails(string jobName, string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var connectionValidation = InputValidator.ValidateConnectionName(connectionName);
+        var jobNameValidation = string.IsNullOrWhiteSpace(jobName) 
+            ? InputValidator.ValidationResult.Failure("Job name cannot be null or empty")
+            : InputValidator.ValidationResult.Success();
+        var combinedValidation = InputValidator.Combine(connectionValidation, jobNameValidation);
+
+        if (!combinedValidation.IsValid)
+        {
+            var errorMessage = $"Invalid input parameters: {combinedValidation.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting SQL Server Agent job details for job: {JobName} on connection: {ConnectionName}", jobName, connectionName);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         try
@@ -406,14 +482,21 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting SQL Server Agent job details for {JobName}", jobName);
             return "{ \"error\": \"An error occurred while retrieving SQL Server Agent job details.\" }";
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Gets SSIS catalog information including Project Deployment and Package Deployment models
     /// </summary>
     [McpServerTool, Description("Gets SSIS catalog information including Project Deployment and Package Deployment models.")]
     public async Task<string> GetSsisCatalogInfo(string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var validationResult = InputValidator.ValidateConnectionName(connectionName);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection name: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting SSIS catalog information for connection: {ConnectionName}", connectionName);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
         try
@@ -439,12 +522,21 @@ public class SqlServerTools : ISqlServerTools
             _logger.LogError(ex, "Error getting SSIS catalog information");
             return "{ \"error\": \"An error occurred while retrieving SSIS catalog information. The catalog may not exist on this server or you may not have sufficient permissions.\" }";
         }
-    }    /// <summary>
-         /// Gets Azure DevOps information including projects, repositories, builds, and work items
-         /// </summary>
+    }    /// <summary>    /// <summary>
+    /// Gets Azure DevOps information including projects, repositories, builds, and work items
+    /// </summary>
     [McpServerTool, Description("Gets Azure DevOps information including projects, repositories, builds, and work items.")]
     public async Task<string> GetAzureDevOpsInfo(string connectionName = "DefaultConnection")
     {
+        // Validate input parameters
+        var validationResult = InputValidator.ValidateConnectionName(connectionName);
+        if (!validationResult.IsValid)
+        {
+            var errorMessage = $"Invalid connection name: {validationResult.ErrorMessage}";
+            _logger.LogError(errorMessage);
+            return JsonSerializer.Serialize(new { error = errorMessage });
+        }
+
         _logger.LogInformation("Getting Azure DevOps information for connection: {ConnectionName}", connectionName);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
         try
