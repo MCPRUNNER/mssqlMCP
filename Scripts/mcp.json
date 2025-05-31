@@ -1,0 +1,21 @@
+{ 
+   "inputs":[
+        {
+            "id": "mssql-server-mcp-api-key",
+            "type": "promptString",
+            "description": "Enter your SQL Server MCP API Key",
+            "password": true        
+        }
+   ],
+   "servers": {
+       
+        
+  "mssqlmcp": {
+            "url": "http://localhost:3001",
+            "headers": {
+                "X-API-Key": "${input:mssql-server-mcp-api-key}"    ,
+                "Content-Type": "application/json"
+            }
+        }
+    }
+}

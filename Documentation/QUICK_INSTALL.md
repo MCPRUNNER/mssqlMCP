@@ -7,7 +7,7 @@ Just use the docker image `7045khz/mssqlmcp` [Docker Hub Instructions](/Document
 ## Install Tasks
 
 1. Checkout code from [https://github.com/7045kHz/mssqlMCP.git](https://github.com/7045kHz/mssqlMCP.git)
-2. Decide on an encryption key `MSSQL_MCP_KEY` or type `string` and save somewhere. This string will be used to encrypt the connections saved in the interal sqlite database.
+2. Decide on an encryption key `MSSQL_MCP_KEY` or type `string` and save somewhere. This string will be used to encrypt the connections saved in the interal sqlite database. You can use [Scripts/Generate-MCP-Key.ps1](/Scripts/Generate-MCP-Key.ps1) to create one.
 3. In a powershell session, set the MSSQL_MCP_KEY variable to your encryption key.
 4. Generate the API key `MSSQL_MCP_API_KEY` using [Scripts/Set-Api-Key.ps1](/Scripts/Set-Api-Key.ps1) and save somewhere.
 5. In the same powershell session, set the `MSSQL_MCP_API_KEY` variable to your API key.
