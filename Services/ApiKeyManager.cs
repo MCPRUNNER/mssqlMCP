@@ -3,6 +3,7 @@ using mssqlMCP.Models;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace mssqlMCP.Services;
@@ -69,7 +70,10 @@ public class ApiKeyManager : IApiKeyManager
             CreatedAt = DateTime.UtcNow,
             ExpirationDate = request.ExpirationDate,
             IsActive = true,
-            KeyType = request.KeyType
+            KeyType = request.KeyType,
+            AllowedConnectionNames = request.AllowedConnectionNames is not null && request.AllowedConnectionNames.Count > 0
+                ? JsonSerializer.Serialize(request.AllowedConnectionNames)
+                : null
         };
 
         // Save the API key (repository will encrypt it)
@@ -237,7 +241,12 @@ public class ApiKeyManager : IApiKeyManager
 
     public Task<bool> IsMasterKeyAsync(string keyValue)
     {
-        return Task.FromResult(!string.IsNullOrEmpty(_masterKey) && keyValue == _masterKey);
+        return Task.FromResult(IsMasterKey(keyValue));
+    }
+
+    private bool IsMasterKey(string keyValue)
+    {
+        return !string.IsNullOrEmpty(_masterKey) && keyValue == _masterKey;
     }
 
     private string GenerateSecureApiKey()
@@ -248,6 +257,14 @@ public class ApiKeyManager : IApiKeyManager
         {
             rng.GetBytes(bytes);
         }
-        return Convert.ToBase64String(bytes);
+
+        var key = Convert.ToBase64String(bytes);
+
+        if (string.IsNullOrEmpty(key) || IsMasterKey(key))
+        {
+            throw new Exception("Generated key is invalid");
+        }
+
+        return key;
     }
 }
