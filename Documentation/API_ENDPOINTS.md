@@ -957,7 +957,8 @@ Authorization: Bearer <master-api-key>
       "name": "My Service API Key",
       "userId": "service-123",
       "keyType": "service",
-      "expirationDate": "2026-06-29T00:00:00Z"
+      "expirationDate": "2026-06-29T00:00:00Z",
+      "allowedConnectionNames": ["conn1", "conn2"]
     }
   }
 }
@@ -975,7 +976,8 @@ Alternative direct method format:
       "name": "My Service API Key",
       "userId": "service-123",
       "keyType": "service",
-      "expirationDate": "2026-06-29T00:00:00Z"
+      "expirationDate": "2026-06-29T00:00:00Z",
+      "allowedConnectionNames": ["conn1", "conn2"]
     }
   }
 }
@@ -997,7 +999,8 @@ Alternative direct method format:
     "lastUsed": null,
     "isActive": true,
     "keyType": "service",
-    "description": ""
+    "description": "",
+    "allowedConnectionNames": ["conn1", "conn2"]
   }
 }
 ```
@@ -1047,7 +1050,8 @@ Authorization: Bearer <master-api-key>
       "lastUsed": "2025-06-29T14:35:42.654321Z",
       "isActive": true,
       "keyType": "service",
-      "description": ""
+      "description": "",
+      "allowedConnectionNames": null
     }
   ]
 }
@@ -1092,7 +1096,8 @@ Authorization: Bearer <master-api-key>
       "expirationDate": "2026-06-29T00:00:00Z",
       "lastUsed": "2025-06-29T14:35:42.654321Z",
       "isActive": true,
-      "keyType": "service"
+      "keyType": "service",
+      "allowedConnectionNames": null
     },
     {
       "id": "9a8b7c6d-5e4f-3g2h-1i0j-klm123456789",
@@ -1102,7 +1107,8 @@ Authorization: Bearer <master-api-key>
       "expirationDate": null,
       "lastUsed": "2025-06-29T10:15:22.654321Z",
       "isActive": true,
-      "keyType": "user"
+      "keyType": "user",
+      "allowedConnectionNames": null
     }
   ]
 }
