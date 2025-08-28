@@ -201,7 +201,11 @@
                 "name": { "type": "string" },
                 "userId": { "type": "string" },
                 "keyType": { "type": "string" },
-                "expirationDate": { "type": ["string", "null"] }
+                "expirationDate": { "type": ["string", "null"] },
+                "allowedConnectionNames": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
               },
               "additionalProperties": false
             }

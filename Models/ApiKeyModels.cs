@@ -62,6 +62,13 @@ public class ApiKey
     /// Optional description of the key's purpose
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// JSON string array of allowed connection names. If null or empty, all connections are allowed.
+    /// This only applies to user type keys.
+    /// </summary>
+    /// <example>["conn1", "conn2"]</example>
+    public string? AllowedConnectionNames { get; set; }
 }
 
 /// <summary>
@@ -91,6 +98,11 @@ public class CreateApiKeyRequest
     {
         get; set;
     }
+
+    /// <summary>
+    /// Optional list of connection names that this key is allowed to access.
+    /// </summary>
+    public List<string>? AllowedConnectionNames { get; set; }
 }
 
 /// <summary>
@@ -162,6 +174,11 @@ public class ApiKeyResponse
     /// Optional description
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional list of connection names that this key is allowed to access.
+    /// </summary>
+    public List<string>? AllowedConnectionNames { get; set; }
 }
 
 /// <summary>

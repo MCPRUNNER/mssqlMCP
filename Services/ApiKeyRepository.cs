@@ -101,7 +101,8 @@ public class SqliteApiKeyRepository : IApiKeyRepository, IDisposable
                     LastUsed TEXT NULL,
                     IsActive INTEGER NOT NULL DEFAULT 1,
                     KeyType TEXT NOT NULL DEFAULT 'user',
-                    Description TEXT NULL
+                    Description TEXT NULL,
+                    AllowedConnectionNames TEXT NULL
                 );
             ");
 
@@ -231,10 +232,10 @@ public class SqliteApiKeyRepository : IApiKeyRepository, IDisposable
         await connection.ExecuteAsync(@"
             INSERT INTO ApiKeys (
                 Id, Name, Key, UserId, CreatedAt, ExpirationDate, 
-                LastUsed, IsActive, KeyType, Description
+                LastUsed, IsActive, KeyType, Description, AllowedConnectionNames
             ) VALUES (
                 @Id, @Name, @Key, @UserId, @CreatedAt, @ExpirationDate,
-                @LastUsed, @IsActive, @KeyType, @Description
+                @LastUsed, @IsActive, @KeyType, @Description, @AllowedConnectionNames
             );",
             apiKey);
 
