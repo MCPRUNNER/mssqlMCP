@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
+    .WriteTo.Console()
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -179,6 +180,7 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
+#if DEBUG
 // Add a direct endpoint for testing
 app.MapGet("/api/test", () => "SQL Server MCP Server is running!");
 
@@ -246,6 +248,7 @@ app.MapGet("/api/tables", async (string? schema, string? connectionName, IConfig
             statusCode: 500);
     }
 });
+#endif
 
 app.UseExceptionHandler(appError =>
 {
