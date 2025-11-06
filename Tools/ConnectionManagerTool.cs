@@ -35,7 +35,7 @@ public class ConnectionManagerTool
     /// <summary>
     /// List all available connections
     /// </summary>
-    [McpServerTool(Name = "mssql_list_connections"), Description("List all available database connections.")]
+    [McpServerTool, Description("List all available database connections.")]
     public async Task<ListConnectionsResponse> ListConnectionsAsync()
     {
         try
@@ -70,7 +70,7 @@ public class ConnectionManagerTool
     }    /// <summary>
          /// Test a connection string
          /// </summary>
-    [McpServerTool(Name = "mssql_test_connection"), Description("Test a database connection.")]
+    [McpServerTool, Description("Test a database connection.")]
     public async Task<TestConnectionResponse> TestConnectionAsync(TestConnectionRequest request)
     {
         // Validate input parameters
@@ -121,7 +121,7 @@ public class ConnectionManagerTool
     }    /// <summary>
          /// Add a new connection
          /// </summary>
-    [McpServerTool(Name = "mssql_add_connection"), Description("Add a new database connection.")]
+    [McpServerTool, Description("Add a new database connection.")]
     public async Task<AddConnectionResponse> AddConnectionAsync(AddConnectionRequest request)
     {
         // Validate input parameters
@@ -189,7 +189,7 @@ public class ConnectionManagerTool
     }    /// <summary>
          /// Update an existing connection
          /// </summary>
-    [McpServerTool(Name = "mssql_update_connection"), Description("Update an existing database connection.")]
+    [McpServerTool, Description("Update an existing database connection.")]
     public async Task<UpdateConnectionResponse> UpdateConnectionAsync(UpdateConnectionRequest request)
     {
         // Validate input parameters
@@ -248,7 +248,7 @@ public class ConnectionManagerTool
     }    /// <summary>
          /// Remove a connection
          /// </summary>
-    [McpServerTool(Name = "mssql_remove_connection"), Description("Remove a database connection.")]
+    [McpServerTool, Description("Remove a database connection.")]
     public async Task<RemoveConnectionResponse> RemoveConnectionAsync(RemoveConnectionRequest request)
     {
         // Validate input parameters

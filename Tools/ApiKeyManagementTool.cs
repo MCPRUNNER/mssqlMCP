@@ -30,7 +30,7 @@ public class ApiKeyManagementTool
     /// </summary>
     /// <param name="request">API key creation details</param>
     /// <returns>The created API key with its value (shown only once)</returns>
-    [McpServerTool(Name = "mssql_create_key"), Description("Create a new API key for a user")]
+    [McpServerTool, Description("Create a new API key for a user")]
     public async Task<ApiKeyResponse> CreateApiKey(CreateApiKeyRequest request)
     {
         _logger.LogInformation($"Creating API key for user {request.UserId}");
@@ -50,7 +50,7 @@ public class ApiKeyManagementTool
     /// </summary>
     /// <param name="userId">The user ID whose keys to list</param>
     /// <returns>Collection of API keys for the user</returns>
-    [McpServerTool(Name = "mssql_list_user_keys"), Description("List API keys for a user")]
+    [McpServerTool, Description("List API keys for a user")]
     public async Task<IEnumerable<ApiKeyResponse>> ListUserApiKeys(string userId)
     {
         _logger.LogInformation($"Listing API keys for user {userId}");
@@ -70,7 +70,7 @@ public class ApiKeyManagementTool
     /// </summary>
     /// <param name="userId">The user ID whose keys to list</param>
     /// <returns>Collection of API keys for the user</returns>
-    [McpServerTool(Name = "mssql_list_user_keys"), Description("List API keys for a user")]
+    [McpServerTool, Description("List API keys for a user")]
     public async Task<IEnumerable<ApiKeyResponse>> ListApiKeys(string userId)
     {
         return await ListUserApiKeys(userId);
@@ -100,7 +100,7 @@ public class ApiKeyManagementTool
     /// </summary>
     /// <param name="request">Request containing the ID of the key to revoke</param>
     /// <returns>Success status</returns>
-    [McpServerTool(Name = "mssql_revoke_key"), Description("Revoke an API key")]
+    [McpServerTool, Description("Revoke an API key")]
     public async Task<object> RevokeApiKey(RevokeApiKeyRequest request)
     {
         _logger.LogInformation($"Revoking API key {request.Id}");
@@ -121,7 +121,7 @@ public class ApiKeyManagementTool
     /// </summary>
     /// <param name="id">ID of the key to delete</param>
     /// <returns>Success status</returns>
-    [McpServerTool(Name = "mssql_delete_key"), Description("Delete an API key")]
+    [McpServerTool, Description("Delete an API key")]
     public async Task<object> DeleteApiKey(string id)
     {
         _logger.LogInformation($"Deleting API key {id}");

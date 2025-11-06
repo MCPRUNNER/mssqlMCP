@@ -37,7 +37,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>
          /// Initialize the SQL Server connection
          /// </summary>
-    [McpServerTool(Name = "mssql_initialize_connection"), Description("Initialize the SQL Server connection.")]
+    [McpServerTool, Description("Initialize the SQL Server connection.")]
     public async Task<string> Initialize(string connectionName = "DefaultConnection")
     {
         // Validate input parameters
@@ -88,7 +88,7 @@ public class SqlServerTools : ISqlServerTools
     /// <summary>
     /// Executes a SQL query and returns the results as JSON
     /// </summary>
-    [McpServerTool(Name = "mssql_execute_query"), Description("Executes a SQL query and returns the results as JSON.")]
+    [McpServerTool, Description("Executes a SQL query and returns the results as JSON.")]
     public async Task<string> ExecuteQuery(string query, string connectionName = "DefaultConnection")
     {
         // Validate input parameters
@@ -151,7 +151,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>
          /// Gets detailed metadata about database tables, columns, primary keys and foreign keys
          /// </summary>
-    [McpServerTool(Name = "mssql_get_table_metadata"), Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
+    [McpServerTool, Description("Gets detailed metadata about the database tables, columns, primary keys and foreign keys.")]
     public async Task<string> GetTableMetadata(string connectionName = "DefaultConnection", string? schema = null)
     {
         // Validate input parameters
@@ -224,7 +224,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>
          /// Gets detailed metadata about database objects including tables and views
          /// </summary>
-    [McpServerTool(Name = "mssql_get_database_objects_metadata"), Description("Gets detailed metadata about database objects including tables and views.")]
+    [McpServerTool, Description("Gets detailed metadata about database objects including tables and views.")]
     public async Task<string> GetDatabaseObjectsMetadata(string connectionName = "DefaultConnection", string? schema = null, bool includeViews = true)
     {
         // Validate input parameters
@@ -304,7 +304,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>
          /// Gets detailed metadata about specific database object types (tables or views)
          /// </summary>
-    [McpServerTool(Name = "mssql_get_database_objects_by_type"), Description("Gets detailed metadata about specific database object types.")]
+    [McpServerTool, Description("Gets detailed metadata about specific database object types.")]
     public async Task<string> GetDatabaseObjectsByType(string connectionName = "DefaultConnection", string? schema = null, string objectType = "ALL")
     {
         // Validate input parameters
@@ -485,7 +485,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>
          /// Gets SSIS catalog information including Project Deployment and Package Deployment models
          /// </summary>
-    [McpServerTool(Name = "mssql_get_ssis_catalog_info"), Description("Gets SSIS catalog information including Project Deployment and Package Deployment models.")]
+    [McpServerTool, Description("Gets SSIS catalog information including Project Deployment and Package Deployment models.")]
     public async Task<string> GetSsisCatalogInfo(string connectionName = "DefaultConnection")
     {
         // Validate input parameters
@@ -525,7 +525,7 @@ public class SqlServerTools : ISqlServerTools
     }    /// <summary>    /// <summary>
          /// Gets Azure DevOps information including projects, repositories, builds, and work items
          /// </summary>
-    [McpServerTool(Name = "mssql_get_azure_devops_info"), Description("Gets Azure DevOps information including projects, repositories, builds, and work items.")]
+    [McpServerTool, Description("Gets Azure DevOps information including projects, repositories, builds, and work items.")]
     public async Task<string> GetAzureDevOpsInfo(string connectionName = "DefaultConnection")
     {
         // Validate input parameters
