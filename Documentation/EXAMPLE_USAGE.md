@@ -1,6 +1,6 @@
 # SQL Database Schema Analysis and Visualization
 
-Based on the database schema retrieved from `#GetDatabaseObjectsMetadata connectionName=P330_AdventureWorks2022`, this document provides a comprehensive analysis and visualization of the AdventureWorks2022 database structure.
+Based on the database schema retrieved from `#mssql_get_database_objects_metadata connectionName=P330_AdventureWorks2022`, this document provides a comprehensive analysis and visualization of the AdventureWorks2022 database structure.
 
 ## Database Overview
 

@@ -34,7 +34,7 @@ In your VSCode Github Copilot chat window, select Agent mode, and enter the foll
 
 ```prompt
 
-#AddConnection ConnectionName="localhost_AdventureWorks2019" ConnectionString="Server=localhost;Database=AdventureWorks2019;Trusted_Connection=True;TrustServerCertificate=True;" Description="My Demo AdventureWorks2019 database"
+#mssql_add_connection ConnectionName="localhost_AdventureWorks2019" ConnectionString="Server=localhost;Database=AdventureWorks2019;Trusted_Connection=True;TrustServerCertificate=True;" Description="My Demo AdventureWorks2019 database"
 
 ```
 
@@ -48,7 +48,7 @@ In your VSCode Github Copilot chat window, select Agent mode, and enter the foll
 
 ```prompt
 
-#ListConnections
+#mssql_list_connections
 
 ```
 
@@ -71,15 +71,15 @@ You have 4 SQL Server connections configured in your MCP server. The most recent
 
 ```
 # Test a specific connection
-#TestConnection ConnectionName="localhost_AdventureWorks2019"
+#mssql_test_connection ConnectionName="localhost_AdventureWorks2019"
 
 # Get database metadata
-#GetDatabaseObjectsMetadata connectionName="localhost_AdventureWorks2019"
+#mssql_get_database_objects_metadata connectionName="localhost_AdventureWorks2019"
 
 # Get specific object types
-#GetDatabaseObjectsMetadata connectionName="localhost_AdventureWorks2019" objectType=TABLE
-#GetDatabaseObjectsMetadata connectionName="localhost_AdventureWorks2019" objectType=VIEW
-#GetDatabaseObjectsMetadata connectionName="localhost_AdventureWorks2019" objectType=PROCEDURE
+#mssql_get_database_objects_metadata connectionName="localhost_AdventureWorks2019" objectType=TABLE
+#mssql_get_database_objects_metadata connectionName="localhost_AdventureWorks2019" objectType=VIEW
+#mssql_get_database_objects_metadata connectionName="localhost_AdventureWorks2019" objectType=PROCEDURE
 ```
 
 ## More of what you can do
@@ -88,7 +88,7 @@ You have 4 SQL Server connections configured in your MCP server. The most recent
 # In `Ask Mode` Summerize my database
 
 [Prompt]
-Using all results from #GetDatabaseObjectsMetadata connectionName="localhost_AdventureWorks2019", give me a high level summary of my database and include mermaid graphs for all SQL objects.
+Using all results from #mssql_get_database_objects_metadata connectionName="localhost_AdventureWorks2019", give me a high level summary of my database and include mermaid graphs for all SQL objects.
 
 ```
 

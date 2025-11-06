@@ -1,8 +1,8 @@
 # mssqlMCP Release Notes
 
-## Version 2.1.0 - Security Enhancement Release
+## Version 1.0.9.4 - Security Enhancement Release
 
-**Release Date:** November 5, 2025
+**Release Date:** November 6, 2025
 
 ---
 

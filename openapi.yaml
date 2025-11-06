@@ -157,7 +157,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["Initialize"]
+              enum: ["mssql_initialize_connection"]
             params:
               $ref: '#/components/schemas/InitializeParams'
           required:
@@ -184,7 +184,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["ExecuteQuery"]
+              enum: ["mssql_execute_query"]
             params:
               $ref: '#/components/schemas/ExecuteQueryParams'
           required:
@@ -211,7 +211,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetTableMetadata"]
+              enum: ["mssql_get_table_metadata"]
             params:
               $ref: '#/components/schemas/GetTableMetadataParams'
           required:
@@ -241,7 +241,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetDatabaseObjectsMetadata"]
+              enum: ["mssql_get_database_objects_metadata"]
             params:
               $ref: '#/components/schemas/GetDatabaseObjectsMetadataParams'
           required:
@@ -271,7 +271,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetDatabaseObjectsByType"]
+              enum: ["mssql_get_database_objects_by_type"]
             params:
               $ref: '#/components/schemas/GetDatabaseObjectsByTypeParams'
           required:
@@ -293,7 +293,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetSqlServerAgentJobs"]
+              enum: ["mssql_get_agent_jobs"]
             params:
               $ref: '#/components/schemas/GetSqlServerAgentJobsParams'
           required:
@@ -320,7 +320,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetSqlServerAgentJobDetails"]
+              enum: ["mssql_get_agent_job_details"]
             params:
               $ref: '#/components/schemas/GetSqlServerAgentJobDetailsParams'
           required:
@@ -343,7 +343,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetSsisCatalogInfo"]
+              enum: ["mssql_get_ssis_catalog_info"]
             params:
               $ref: '#/components/schemas/GetSsisCatalogInfoParams'
           required:
@@ -365,7 +365,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GetAzureDevOpsInfo"]
+              enum: ["mssql_get_azure_devops_info"]
             params:
               $ref: '#/components/schemas/GetAzureDevOpsInfoParams'
           required:
@@ -380,7 +380,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["ListConnections"]
+              enum: ["mssql_list_connections"]
             params:
               type: object
               nullable: true
@@ -403,7 +403,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["AddConnection"]
+              enum: ["mssql_add_connection"]
             params:
               $ref: '#/components/schemas/AddConnectionParams'
           required:
@@ -426,7 +426,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["UpdateConnection"]
+              enum: ["mssql_update_connection"]
             params:
               $ref: '#/components/schemas/UpdateConnectionParams'
           required:
@@ -449,7 +449,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["RemoveConnection"]
+              enum: ["mssql_remove_connection"]
             params:
               $ref: '#/components/schemas/RemoveConnectionParams'
           required:
@@ -472,7 +472,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["TestConnection"]
+              enum: ["mssql_test_connection"]
             params:
               $ref: '#/components/schemas/TestConnectionParams'
           required:
@@ -496,7 +496,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["RotateKey"]
+              enum: ["mssql_rotate_key"]
             params:
               $ref: '#/components/schemas/RotateKeyParams'
           required:
@@ -519,7 +519,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["GenerateSecureKey"]
+              enum: ["mssql_generate_key"]
             params:
               $ref: '#/components/schemas/GenerateSecureKeyParams'
           required:
@@ -534,7 +534,7 @@ components:
           properties:
             method:
               type: string
-              enum: ["MigrateConnectionsToEncrypted"]
+              enum: ["mssql_migrate_connections"]
             params:
               type: object
               nullable: true
