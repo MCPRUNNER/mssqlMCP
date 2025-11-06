@@ -2,10 +2,10 @@
   "result": {
     "tools": [
       {
-        "name": "TestConnection",
+        "name": "mssql_test_connection",
         "description": "Test a database connection.",
         "inputSchema": {
-          "title": "TestConnection",
+          "title": "mssql_test_connection",
           "description": "Test a database connection.",
           "type": "object",
           "properties": {
@@ -19,10 +19,10 @@
         }
       },
       {
-        "name": "RotateKey",
+        "name": "mssql_rotate_key",
         "description": "Rotate encryption key for connection strings",
         "inputSchema": {
-          "title": "RotateKey",
+          "title": "mssql_rotate_key",
           "description": "Rotate encryption key for connection strings",
           "type": "object",
           "properties": { "newKey": { "type": "string" } },
@@ -30,10 +30,10 @@
         }
       },
       {
-        "name": "GetTableMetadata",
+        "name": "mssql_get_table_metadata",
         "description": "Gets detailed metadata about the database tables, columns, primary keys and foreign keys.",
         "inputSchema": {
-          "title": "GetTableMetadata",
+          "title": "mssql_get_table_metadata",
           "description": "Gets detailed metadata about the database tables, columns, primary keys and foreign keys.",
           "type": "object",
           "properties": {
@@ -46,10 +46,10 @@
         }
       },
       {
-        "name": "GetSqlServerAgentJobDetails",
+        "name": "mssql_get_agent_job_details",
         "description": "Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job.",
         "inputSchema": {
-          "title": "GetSqlServerAgentJobDetails",
+          "title": "mssql_get_agent_job_details",
           "description": "Gets detailed information (steps, schedules, history) for a specific SQL Server Agent job.",
           "type": "object",
           "properties": {
@@ -63,20 +63,20 @@
         }
       },
       {
-        "name": "ListConnections",
+        "name": "mssql_list_connections",
         "description": "List all available database connections.",
         "inputSchema": {
-          "title": "ListConnections",
+          "title": "mssql_list_connections",
           "description": "List all available database connections.",
           "type": "object",
           "properties": {}
         }
       },
       {
-        "name": "GetApiKeyUsageLogs",
+        "name": "mssql_get_key_usage_logs",
         "description": "Get recent usage logs for a specific API key (admin only)",
         "inputSchema": {
-          "title": "GetApiKeyUsageLogs",
+          "title": "mssql_get_key_usage_logs",
           "description": "Get recent usage logs for a specific API key (admin only)",
           "type": "object",
           "properties": {
@@ -87,10 +87,10 @@
         }
       },
       {
-        "name": "Initialize",
+        "name": "mssql_initialize_connection",
         "description": "Initialize the SQL Server connection.",
         "inputSchema": {
-          "title": "Initialize",
+          "title": "mssql_initialize_connection",
           "description": "Initialize the SQL Server connection.",
           "type": "object",
           "properties": {
@@ -102,10 +102,10 @@
         }
       },
       {
-        "name": "GetUserUsageLogs",
+        "name": "mssql_get_user_usage_logs",
         "description": "Get recent usage logs for a user (admin only)",
         "inputSchema": {
-          "title": "GetUserUsageLogs",
+          "title": "mssql_get_user_usage_logs",
           "description": "Get recent usage logs for a user (admin only)",
           "type": "object",
           "properties": {
@@ -116,10 +116,10 @@
         }
       },
       {
-        "name": "RemoveConnection",
+        "name": "mssql_remove_connection",
         "description": "Remove a database connection.",
         "inputSchema": {
-          "title": "RemoveConnection",
+          "title": "mssql_remove_connection",
           "description": "Remove a database connection.",
           "type": "object",
           "properties": {
@@ -133,10 +133,10 @@
         }
       },
       {
-        "name": "GetDatabaseObjectsByType",
+        "name": "mssql_get_database_objects_by_type",
         "description": "Gets detailed metadata about specific database object types.",
         "inputSchema": {
-          "title": "GetDatabaseObjectsByType",
+          "title": "mssql_get_database_objects_by_type",
           "description": "Gets detailed metadata about specific database object types.",
           "type": "object",
           "properties": {
@@ -150,10 +150,10 @@
         }
       },
       {
-        "name": "RevokeApiKey",
+        "name": "mssql_revoke_key",
         "description": "Revoke an API key",
         "inputSchema": {
-          "title": "RevokeApiKey",
+          "title": "mssql_revoke_key",
           "description": "Revoke an API key",
           "type": "object",
           "properties": {
@@ -167,10 +167,10 @@
         }
       },
       {
-        "name": "ListApiKeys",
+        "name": "mssql_list_user_keys",
         "description": "List API keys for a user",
         "inputSchema": {
-          "title": "ListApiKeys",
+          "title": "mssql_list_user_keys",
           "description": "List API keys for a user",
           "type": "object",
           "properties": { "userId": { "type": "string" } },
@@ -178,20 +178,20 @@
         }
       },
       {
-        "name": "GenerateSecureKey",
+        "name": "mssql_generate_key",
         "description": "Generate a secure random key for connection string encryption",
         "inputSchema": {
-          "title": "GenerateSecureKey",
+          "title": "mssql_generate_key",
           "description": "Generate a secure random key for connection string encryption",
           "type": "object",
           "properties": { "length": { "type": "integer", "default": 32 } }
         }
       },
       {
-        "name": "CreateApiKey",
+        "name": "mssql_create_key",
         "description": "Create a new API key for a user",
         "inputSchema": {
-          "title": "CreateApiKey",
+          "title": "mssql_create_key",
           "description": "Create a new API key for a user",
           "type": "object",
           "properties": {
@@ -214,10 +214,10 @@
         }
       },
       {
-        "name": "GetDatabaseObjectsMetadata",
+        "name": "mssql_get_database_objects_metadata",
         "description": "Gets detailed metadata about database objects including tables and views.",
         "inputSchema": {
-          "title": "GetDatabaseObjectsMetadata",
+          "title": "mssql_get_database_objects_metadata",
           "description": "Gets detailed metadata about database objects including tables and views.",
           "type": "object",
           "properties": {
@@ -231,10 +231,10 @@
         }
       },
       {
-        "name": "AddConnection",
+        "name": "mssql_add_connection",
         "description": "Add a new database connection.",
         "inputSchema": {
-          "title": "AddConnection",
+          "title": "mssql_add_connection",
           "description": "Add a new database connection.",
           "type": "object",
           "properties": {
@@ -252,10 +252,10 @@
         }
       },
       {
-        "name": "GetSsisCatalogInfo",
+        "name": "mssql_get_ssis_catalog_info",
         "description": "Gets SSIS catalog information including Project Deployment and Package Deployment models.",
         "inputSchema": {
-          "title": "GetSsisCatalogInfo",
+          "title": "mssql_get_ssis_catalog_info",
           "description": "Gets SSIS catalog information including Project Deployment and Package Deployment models.",
           "type": "object",
           "properties": {
@@ -267,10 +267,10 @@
         }
       },
       {
-        "name": "UpdateConnection",
+        "name": "mssql_update_connection",
         "description": "Update an existing database connection.",
         "inputSchema": {
-          "title": "UpdateConnection",
+          "title": "mssql_update_connection",
           "description": "Update an existing database connection.",
           "type": "object",
           "properties": {
@@ -288,20 +288,20 @@
         }
       },
       {
-        "name": "MigrateConnectionsToEncrypted",
+        "name": "mssql_migrate_connections",
         "description": "Migrate unencrypted connection strings to encrypted format",
         "inputSchema": {
-          "title": "MigrateConnectionsToEncrypted",
+          "title": "mssql_migrate_connections",
           "description": "Migrate unencrypted connection strings to encrypted format",
           "type": "object",
           "properties": {}
         }
       },
       {
-        "name": "GetAzureDevOpsInfo",
+        "name": "mssql_get_azure_devops_info",
         "description": "Gets Azure DevOps information including projects, repositories, builds, and work items.",
         "inputSchema": {
-          "title": "GetAzureDevOpsInfo",
+          "title": "mssql_get_azure_devops_info",
           "description": "Gets Azure DevOps information including projects, repositories, builds, and work items.",
           "type": "object",
           "properties": {
@@ -313,10 +313,10 @@
         }
       },
       {
-        "name": "ListUserApiKeys",
+        "name": "mssql_list_user_keys",
         "description": "List API keys for a user",
         "inputSchema": {
-          "title": "ListUserApiKeys",
+          "title": "mssql_list_user_keys",
           "description": "List API keys for a user",
           "type": "object",
           "properties": { "userId": { "type": "string" } },
@@ -324,20 +324,20 @@
         }
       },
       {
-        "name": "ListAllApiKeys",
+        "name": "mssql_list_all_keys",
         "description": "List all API keys (admin only)",
         "inputSchema": {
-          "title": "ListAllApiKeys",
+          "title": "mssql_list_all_keys",
           "description": "List all API keys (admin only)",
           "type": "object",
           "properties": {}
         }
       },
       {
-        "name": "ExecuteQuery",
+        "name": "mssql_execute_query",
         "description": "Executes a SQL query and returns the results as JSON.",
         "inputSchema": {
-          "title": "ExecuteQuery",
+          "title": "mssql_execute_query",
           "description": "Executes a SQL query and returns the results as JSON.",
           "type": "object",
           "properties": {
@@ -351,10 +351,10 @@
         }
       },
       {
-        "name": "GetSqlServerAgentJobs",
+        "name": "mssql_get_agent_jobs",
         "description": "Gets SQL Server Agent job metadata (jobs, status, owner, etc.) from msdb.",
         "inputSchema": {
-          "title": "GetSqlServerAgentJobs",
+          "title": "mssql_get_agent_jobs",
           "description": "Gets SQL Server Agent job metadata (jobs, status, owner, etc.) from msdb.",
           "type": "object",
           "properties": {
@@ -366,10 +366,10 @@
         }
       },
       {
-        "name": "DeleteApiKey",
+        "name": "mssql_delete_key",
         "description": "Delete an API key",
         "inputSchema": {
-          "title": "DeleteApiKey",
+          "title": "mssql_delete_key",
           "description": "Delete an API key",
           "type": "object",
           "properties": { "id": { "type": "string" } },

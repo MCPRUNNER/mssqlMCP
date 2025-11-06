@@ -67,16 +67,16 @@ Different endpoints have different access requirements:
 
 #### User Restricted Endpoints
 
-- `ExecuteQuery`
-- `GetTableMetadata`
-- `GetDatabaseObjectsMetadata`
+- `mssql_execute_query`
+- `mssql_get_table_metadata`
+- `mssql_get_database_objects_metadata`
 - Data retrieval operations
 
 #### Admin/Master Only Endpoints
 
-- `CreateApiKey`
-- `UpdateApiKey`
-- `DeleteApiKey`
+- `mssql_create_key`
+- `mssql_update_key`
+- `mssql_delete_key`
 - API key management operations
 
 ### Security Middleware

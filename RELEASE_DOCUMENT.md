@@ -1,7 +1,7 @@
-# mssqlMCP Release Documentation (1.0.1.2)
+# mssqlMCP Release Documentation (1.0.9.4)
 
-**Release Date:** August 12, 2025  
-**Current Branch:** documentation.2  
+**Release Date:** November 6, 2025  
+**Current Branch:** documentation.3  
 **Release Branch:** origin/main
 
 ## Summary of Changes

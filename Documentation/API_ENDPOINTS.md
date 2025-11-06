@@ -75,7 +75,7 @@ Authorization: Bearer <your-api-key>
   "result": {
     "tools": [
       {
-        "name": "ExecuteQuery",
+        "name": "mssql_execute_query",
         "description": "Executes a SQL query and returns the results as JSON.",
         "inputSchema": {
           "type": "object",
@@ -96,6 +96,19 @@ Authorization: Bearer <your-api-key>
   }
 }
 ```
+
+## Tool Naming Convention (Updated November 2025)
+
+**Important**: All mssqlMCP tools now use the `mssql_` prefix naming convention for consistency and clarity. When calling tools via the `tools/call` method or directly, use the prefixed names:
+
+- **Database Operations**: `mssql_execute_query`, `mssql_get_table_metadata`, `mssql_initialize_connection`
+- **Connection Management**: `mssql_add_connection`, `mssql_update_connection`, `mssql_remove_connection`, `mssql_test_connection`, `mssql_list_connections`
+- **Metadata Tools**: `mssql_get_database_objects_metadata`, `mssql_get_database_objects_by_type`
+- **SQL Server Features**: `mssql_get_agent_jobs`, `mssql_get_agent_job_details`, `mssql_get_ssis_catalog_info`, `mssql_get_azure_devops_info`
+- **Security Tools**: `mssql_generate_key`, `mssql_rotate_key`, `mssql_migrate_connections`
+- **API Key Management**: `mssql_create_key`, `mssql_list_user_keys`, `mssql_list_all_keys`, `mssql_revoke_key`, `mssql_delete_key`, `mssql_get_key_usage_logs`, `mssql_get_user_usage_logs`
+
+This naming convention helps distinguish mssqlMCP tools from other MCP servers and provides consistency across the entire toolset.
 
 ## Tools/Call Endpoint
 
@@ -149,6 +162,8 @@ Authorization: Bearer <your-api-key>
 
 Below are examples for directly invoking each available tool using their method names.
 
+**Note**: All tool names use the `mssql_` prefix convention. Both direct method calls and `tools/call` parameters use these prefixed names.
+
 ### 1. Initialize
 
 Initializes a SQL Server connection.
@@ -166,7 +181,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "Initialize",
+  "method": "mssql_initialize_connection",
   "params": {
     "connectionName": "DefaultConnection"
   }
@@ -186,7 +201,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 2. ExecuteQuery
+### 2. mssql_execute_query
 
 Executes a SQL query and returns the results.
 
@@ -203,7 +218,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 2,
-  "method": "ExecuteQuery",
+  "method": "mssql_execute_query",
   "params": {
     "connectionName": "DefaultConnection",
     "query": "SELECT TOP 10 * FROM sys.databases"
@@ -229,7 +244,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 3. GetTableMetadata
+### 3. mssql_get_table_metadata
 
 Retrieves table metadata including columns, primary keys, and foreign keys.
 
@@ -248,7 +263,7 @@ Authorization: Bearer <your-api-key>
   "id": 3,
   "method": "tools/call",
   "params": {
-    "name": "GetTableMetadata",
+    "name": "mssql_get_table_metadata",
     "arguments": {
       "connectionName": "DefaultConnection",
       "schema": "dbo"
@@ -290,7 +305,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 4. ListConnections
+### 4. mssql_list_connections
 
 Lists all available database connections.
 
@@ -307,7 +322,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 4,
-  "method": "ListConnections",
+  "method": "mssql_list_connections",
   "params": {}
 }
 ```
@@ -333,7 +348,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 5. AddConnection
+### 5. mssql_add_connection
 
 Adds a new database connection.
 
@@ -350,7 +365,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 5,
-  "method": "AddConnection",
+  "method": "mssql_add_connection",
   "params": {
     "request": {
       "name": "NewConnection",
@@ -374,7 +389,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 6. RemoveConnection
+### 6. mssql_remove_connection
 
 Removes an existing database connection.
 
@@ -391,7 +406,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 6,
-  "method": "RemoveConnection",
+  "method": "mssql_remove_connection",
   "params": {
     "request": {
       "name": "ConnectionToRemove"
@@ -413,7 +428,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 7. UpdateConnection
+### 7. mssql_update_connection
 
 Updates an existing database connection.
 
@@ -430,7 +445,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 7,
-  "method": "UpdateConnection",
+  "method": "mssql_update_connection",
   "params": {
     "request": {
       "name": "ExistingConnection",
@@ -454,7 +469,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 8. TestConnection
+### 8. mssql_test_connection
 
 Tests a database connection string.
 
@@ -471,7 +486,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 8,
-  "method": "TestConnection",
+  "method": "mssql_test_connection",
   "params": {
     "request": {
       "connectionString": "Server=myserver;Database=mydb;User Id=myuser;Password=mypassword;"
@@ -494,7 +509,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 9. GetDatabaseObjectsMetadata
+### 9. mssql_get_database_objects_metadata
 
 Gets detailed metadata about database objects including tables and views.
 
@@ -513,7 +528,7 @@ Authorization: Bearer <your-api-key>
   "id": 11,
   "method": "tools/call",
   "params": {
-    "name": "GetDatabaseObjectsMetadata",
+    "name": "mssql_get_database_objects_metadata",
     "arguments": {
       "connectionName": "myDB_ConnectionName",
       "schema": "dbo",
@@ -546,7 +561,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 10. GetDatabaseObjectsByType
+### 10. mssql_get_database_objects_by_type
 
 Gets detailed metadata about specific database object types.
 
@@ -563,7 +578,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 10,
-  "method": "GetDatabaseObjectsByType",
+  "method": "mssql_get_database_objects_by_type",
   "params": {
     "connectionName": "DefaultConnection",
     "schema": "dbo",
@@ -597,7 +612,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 11. GetSqlServerAgentJobs
+### 11. mssql_get_agent_jobs
 
 Gets SQL Server Agent job metadata.
 
@@ -614,7 +629,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 11,
-  "method": "GetSqlServerAgentJobs",
+  "method": "mssql_get_agent_jobs",
   "params": {
     "connectionName": "DefaultConnection"
   }
@@ -642,7 +657,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 12. GetSqlServerAgentJobDetails
+### 12. mssql_get_agent_job_details
 
 Gets detailed information for a specific SQL Server Agent job.
 
@@ -659,7 +674,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 12,
-  "method": "GetSqlServerAgentJobDetails",
+  "method": "mssql_get_agent_job_details",
   "params": {
     "connectionName": "DefaultConnection",
     "jobName": "DatabaseBackup"
@@ -709,7 +724,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 13. GetSsisCatalogInfo
+### 13. mssql_get_ssis_catalog_info
 
 Gets SSIS catalog information.
 
@@ -726,7 +741,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 13,
-  "method": "GetSsisCatalogInfo",
+  "method": "mssql_get_ssis_catalog_info",
   "params": {
     "connectionName": "DefaultConnection"
   }
@@ -760,7 +775,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 14. GetAzureDevOpsInfo
+### 14. mssql_get_azure_devops_info
 
 Gets Azure DevOps information including projects and repositories.
 
@@ -777,7 +792,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 14,
-  "method": "GetAzureDevOpsInfo",
+  "method": "mssql_get_azure_devops_info",
   "params": {
     "connectionName": "DefaultConnection"
   }
@@ -822,7 +837,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 15. GenerateSecureKey
+### 15. mssql_generate_key
 
 Generates a secure random key for connection string encryption.
 
@@ -839,7 +854,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 15,
-  "method": "GenerateSecureKey",
+  "method": "mssql_generate_key",
   "params": {
     "length": 32
   }
@@ -858,7 +873,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 16. RotateKey
+### 16. mssql_rotate_key
 
 Rotates the encryption key for connection strings.
 
@@ -875,7 +890,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 16,
-  "method": "RotateKey",
+  "method": "mssql_rotate_key",
   "params": {
     "newKey": "Uew8Ap2aiZoh5Wae/XiaNX2PVHXpnC6kPVX0Tcow4FA="
   }
@@ -895,7 +910,7 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-### 17. MigrateConnectionsToEncrypted
+### 17. mssql_migrate_connections
 
 Migrates unencrypted connection strings to encrypted format.
 
@@ -912,7 +927,7 @@ Authorization: Bearer <your-api-key>
 {
   "jsonrpc": "2.0",
   "id": 17,
-  "method": "MigrateConnectionsToEncrypted",
+  "method": "mssql_migrate_connections",
   "params": {}
 }
 ```
@@ -952,7 +967,7 @@ Authorization: Bearer <master-api-key>
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "CreateApiKey",
+    "name": "mssql_create_key",
     "arguments": {
       "name": "My Service API Key",
       "userId": "service-123",
@@ -970,7 +985,7 @@ Alternative direct method format:
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "CreateApiKey",
+  "method": "mssql_create_key",
   "params": {
     "request": {
       "name": "My Service API Key",
@@ -1025,7 +1040,7 @@ Authorization: Bearer <master-api-key>
   "id": 2,
   "method": "tools/call",
   "params": {
-    "name": "ListUserApiKeys",
+    "name": "mssql_list_user_keys",
     "arguments": {
       "userId": "service-123"
     }
@@ -1075,7 +1090,7 @@ Authorization: Bearer <master-api-key>
   "id": 3,
   "method": "tools/call",
   "params": {
-    "name": "ListAllApiKeys",
+    "name": "mssql_list_all_keys",
     "arguments": {}
   }
 }
@@ -1132,7 +1147,7 @@ Authorization: Bearer <master-api-key>
   "id": 4,
   "method": "tools/call",
   "params": {
-    "name": "RevokeApiKey",
+    "name": "mssql_revoke_key",
     "arguments": {
       "request": {
         "id": "75e6d5f3-c851-4c7a-a4b7-874269a31bbb"
@@ -1170,7 +1185,7 @@ Authorization: Bearer <master-api-key>
   "id": 5,
   "method": "tools/call",
   "params": {
-    "name": "DeleteApiKey",
+    "name": "mssql_delete_key",
     "arguments": {
       "id": "75e6d5f3-c851-4c7a-a4b7-874269a31bbb"
     }
@@ -1206,7 +1221,7 @@ Authorization: Bearer <master-api-key>
   "id": 6,
   "method": "tools/call",
   "params": {
-    "name": "GetApiKeyUsageLogs",
+    "name": "mssql_get_key_usage_logs",
     "arguments": {
       "apiKeyId": "75e6d5f3-c851-4c7a-a4b7-874269a31bbb",
       "limit": 100
@@ -1264,7 +1279,7 @@ Authorization: Bearer <master-api-key>
   "id": 7,
   "method": "tools/call",
   "params": {
-    "name": "GetUserUsageLogs",
+    "name": "mssql_get_user_usage_logs",
     "arguments": {
       "userId": "service-123",
       "limit": 100
@@ -1323,7 +1338,7 @@ Authorization: Bearer <your-api-key>
   "id": "copilot-request-1",
   "method": "tools/call",
   "params": {
-    "name": "GetTableMetadata",
+    "name": "mssql_get_table_metadata",
     "arguments": {
       "connectionName": "DefaultConnection",
       "schema": null
@@ -1401,7 +1416,7 @@ Authorization: Bearer <your-api-key>
     "content": [
       {
         "type": "text",
-        "text": "Failed to execute ExecuteQuery: Invalid SQL syntax near 'SELET'"
+        "text": "Failed to execute mssql_execute_query: Invalid SQL syntax near 'SELET'"
       }
     ],
     "isError": true

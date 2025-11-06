@@ -60,7 +60,7 @@ Behind the scenes, Copilot will use MCP tools through JSON-RPC 2.0 requests usin
   "id": "copilot-request-1",
   "method": "tools/call",
   "params": {
-    "name": "Initialize",
+    "name": "mssql_initialize_connection",
     "arguments": {
       "connectionName": "DefaultConnection"
     }
@@ -73,7 +73,7 @@ Behind the scenes, Copilot will use MCP tools through JSON-RPC 2.0 requests usin
   "id": "copilot-request-2",
   "method": "tools/call",
   "params": {
-    "name": "GetTableMetadata",
+    "name": "mssql_get_table_metadata",
     "arguments": {
       "connectionName": "DefaultConnection",
       "schema": "dbo"
@@ -87,7 +87,7 @@ Behind the scenes, Copilot will use MCP tools through JSON-RPC 2.0 requests usin
   "id": "copilot-request-3",
   "method": "tools/call",
   "params": {
-    "name": "ExecuteQuery",
+    "name": "mssql_execute_query",
     "arguments": {
       "connectionName": "DefaultConnection",
       "query": "SELECT TOP 5 * FROM Orders ORDER BY OrderDate DESC"
@@ -153,16 +153,16 @@ The `mcp.json` file in the `.vscode` folder configures how VS Code connects to t
 
 The SQL Server MCP server exposes the following tools to Copilot:
 
-1. **initialize**: Initialize a SQL Server connection
-2. **executeQuery**: Run SQL queries and return results
-3. **getTableMetadata**: Get metadata about database tables and their relationships
-4. **getDatabaseObjectsMetadata**: Get metadata about tables, views, and stored procedures
-5. **connectionManager/list**: List all saved database connections
-6. **connectionManager/add**: Add a new database connection
-7. **connectionManager/update**: Update an existing connection
-8. **connectionManager/remove**: Remove a connection
-9. **security/rotateKey**: Rotate the encryption key for connection strings
-10. **security/generateSecureKey**: Generate a secure random key
+1. **mssql_initialize_connection**: Initialize a SQL Server connection
+2. **mssql_execute_query**: Run SQL queries and return results
+3. **mssql_get_table_metadata**: Get metadata about database tables and their relationships
+4. **mssql_get_database_objects_metadata**: Get metadata about tables, views, and stored procedures
+5. **mssql_list_connections**: List all saved database connections
+6. **mssql_add_connection**: Add a new database connection
+7. **mssql_update_connection**: Update an existing connection
+8. **mssql_remove_connection**: Remove a connection
+9. **mssql_rotate_key**: Rotate the encryption key for connection strings
+10. **mssql_generate_key**: Generate a secure random key
 
 ## Troubleshooting
 
@@ -170,8 +170,8 @@ The SQL Server MCP server exposes the following tools to Copilot:
 
 If you see an error like "Connection string not found":
 
-1. Check if the connection exists using the ListConnections tool
-2. Try adding the connection using the AddConnection tool
+1. Check if the connection exists using the mssql_list_connections tool
+2. Try adding the connection using the mssql_add_connection tool
 3. Verify that your MCP server is running
 
 ### Authentication Errors
@@ -193,14 +193,14 @@ If you see JSON-RPC protocol errors:
 
 ### Example Errors and Solutions
 
-| Error                            | Solution                                                |
-| -------------------------------- | ------------------------------------------------------- |
-| "Connection string not found"    | Add the connection using AddConnection tool             |
-| "401 Unauthorized"               | Configure API key using `Set-Api-Key.ps1`               |
-| "Table not found"                | Check table name and schema, use GetTableMetadata first |
-| "SQL syntax error"               | Fix the SQL query syntax                                |
-| "Method not found: InvalidTool"  | Check tool name, use tools/list to see available tools  |
-| "Invalid parameters for Execute" | Check that all required parameters are provided         |
+| Error                            | Solution                                                        |
+| -------------------------------- | --------------------------------------------------------------- |
+| "Connection string not found"    | Add the connection using mssql_add_connection tool              |
+| "401 Unauthorized"               | Configure API key using `Set-Api-Key.ps1`                       |
+| "Table not found"                | Check table name and schema, use mssql_get_table_metadata first |
+| "SQL syntax error"               | Fix the SQL query syntax                                        |
+| "Method not found: InvalidTool"  | Check tool name, use tools/list to see available tools          |
+| "Invalid parameters for Execute" | Check that all required parameters are provided                 |
 
 ## Example Workflow
 
@@ -215,7 +215,7 @@ Here's an example of how you might use SQL Server MCP with Copilot:
      "id": "request-1",
      "method": "tools/call",
      "params": {
-       "name": "AddConnection",
+       "name": "mssql_add_connection",
        "arguments": {
          "request": {
            "name": "AdventureWorks",

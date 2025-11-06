@@ -21,32 +21,32 @@ The SQL Server MCP server implements a complete MCP-compliant architecture with:
 
 #### Core SQL Server Tools (5 tools)
 
-1. **Initialize** - SQL Server connection initialization with timeout and error handling
-2. **ExecuteQuery** - SQL query execution with JSON result formatting and cancellation support
-3. **GetTableMetadata** - Detailed table metadata with columns, primary keys, foreign keys, and schema filtering
-4. **GetDatabaseObjectsMetadata** - Complete database object metadata with view filtering options
-5. **GetDatabaseObjectsByType** - Object type filtering (TABLE, VIEW, PROCEDURE, FUNCTION, ALL)
+1. **mssql_initialize_connection** - SQL Server connection initialization with timeout and error handling
+2. **mssql_execute_query** - SQL query execution with JSON result formatting and cancellation support
+3. **mssql_get_table_metadata** - Detailed table metadata with columns, primary keys, foreign keys, and schema filtering
+4. **mssql_get_database_objects_metadata** - Complete database object metadata with view filtering options
+5. **mssql_get_database_objects_by_type** - Object type filtering (TABLE, VIEW, PROCEDURE, FUNCTION, ALL)
 
 #### Specialized Metadata Tools (4 tools)
 
-6. **GetSqlServerAgentJobs** - SQL Server Agent job metadata from msdb with job status and ownership
-7. **GetSqlServerAgentJobDetails** - Detailed job information including steps, schedules, and execution history
-8. **GetSsisCatalogInfo** - SSIS catalog metadata with Project/Package deployment models, folders, and packages
-9. **GetAzureDevOpsInfo** - Azure DevOps analytics including projects, repositories, builds, and work items
+6. **mssql_get_agent_jobs** - SQL Server Agent job metadata from msdb with job status and ownership
+7. **mssql_get_agent_job_details** - Detailed job information including steps, schedules, and execution history
+8. **mssql_get_ssis_catalog_info** - SSIS catalog metadata with Project/Package deployment models, folders, and packages
+9. **mssql_get_azure_devops_info** - Azure DevOps analytics including projects, repositories, builds, and work items
 
 #### Connection Management Tools (5 tools)
 
-10. **AddConnection** - Add new database connections with validation
-11. **UpdateConnection** - Modify existing connection configurations
-12. **RemoveConnection** - Delete database connections
-13. **ListConnections** - Enumerate all available connections with metadata
-14. **TestConnection** - Validate connection strings and connectivity
+10. **mssql_add_connection** - Add new database connections with validation
+11. **mssql_update_connection** - Modify existing connection configurations
+12. **mssql_remove_connection** - Delete database connections
+13. **mssql_list_connections** - Enumerate all available connections with metadata
+14. **mssql_test_connection** - Validate connection strings and connectivity
 
 #### Security Tools (3 tools)
 
-15. **GenerateSecureKey** - Generate AES-256 encryption keys for connection security
-16. **MigrateConnectionsToEncrypted** - Migrate unencrypted connections to encrypted format
-17. **RotateKey** - Rotate encryption keys with validation and connection testing
+15. **mssql_generate_key** - Generate AES-256 encryption keys for connection security
+16. **mssql_migrate_connections** - Migrate unencrypted connections to encrypted format
+17. **mssql_rotate_key** - Rotate encryption keys with validation and connection testing
 
 ### Security Infrastructure
 

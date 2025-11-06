@@ -72,8 +72,8 @@ Lists all available tools that can be used with the MCP server.
   "result": {
     "tools": [
       {
-        "name": "ExecuteQuery",
-        "title": "ExecuteQuery",
+        "name": "mssql_execute_query",
+        "title": "mssql_execute_query",
         "description": "Executes a SQL query and returns the results as JSON.",
         "inputSchema": {
           "type": "object",
@@ -107,7 +107,7 @@ Calls a specific tool with the provided arguments. This is the method used by Co
   "id": 2,
   "method": "tools/call",
   "params": {
-    "name": "ExecuteQuery",
+    "name": "mssql_execute_query",
     "arguments": {
       "connectionName": "DefaultConnection",
       "query": "SELECT * FROM Users"
@@ -160,13 +160,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 2 (ExecuteQuery):**
+**Example 2 (mssql_execute_query):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 4,
-  "method": "ExecuteQuery",
+  "id": "2",
+  "method": "mssql_execute_query",
   "params": {
     "query": "SELECT TOP 10 * FROM sys.databases",
     "connectionName": "DefaultConnection"
@@ -174,13 +174,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 3 (GetTableMetadata):**
+**Example 3 (mssql_get_table_metadata):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 5,
-  "method": "GetTableMetadata",
+  "id": "3",
+  "method": "mssql_get_table_metadata",
   "params": {
     "connectionName": "DefaultConnection",
     "schema": "dbo"
@@ -188,24 +188,24 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 4 (ListConnections):**
+**Example 4 (mssql_list_connections):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 6,
-  "method": "ListConnections",
+  "id": "4",
+  "method": "mssql_list_connections",
   "params": {}
 }
 ```
 
-**Example 5 (AddConnection):**
+**Example 5 (mssql_add_connection):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 7,
-  "method": "AddConnection",
+  "id": "5",
+  "method": "mssql_add_connection",
   "params": {
     "request": {
       "name": "NewConnection",
@@ -216,13 +216,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 6 (TestConnection):**
+**Example 6 (mssql_test_connection):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 8,
-  "method": "TestConnection",
+  "id": "6",
+  "method": "mssql_test_connection",
   "params": {
     "request": {
       "connectionString": "Server=myserver;Database=mydb;User Id=myuser;Password=mypassword;"
@@ -231,13 +231,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 7 (RemoveConnection):**
+**Example 7 (mssql_remove_connection):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 9,
-  "method": "RemoveConnection",
+  "id": "7",
+  "method": "mssql_remove_connection",
   "params": {
     "request": {
       "name": "ConnectionToRemove"
@@ -246,13 +246,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 8 (UpdateConnection):**
+**Example 8 (mssql_update_connection):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 10,
-  "method": "UpdateConnection",
+  "id": "8",
+  "method": "mssql_update_connection",
   "params": {
     "request": {
       "name": "ExistingConnection",
@@ -263,15 +263,15 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 9 (GetDatabaseObjectsMetadata):**
+**Example 9 (mssql_get_database_objects_metadata):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 11,
+  "id": "9",
   "method": "tools/call",
   "params": {
-    "name": "GetDatabaseObjectsMetadata",
+    "name": "mssql_get_database_objects_metadata",
     "arguments": {
       "connectionName": "myDB_ConnectionName",
       "schema": "dbo",
@@ -281,13 +281,13 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 10 (GetDatabaseObjectsByType):**
+**Example 10 (mssql_get_database_objects_by_type):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 12,
-  "method": "GetDatabaseObjectsByType",
+  "id": "10",
+  "method": "mssql_get_database_objects_by_type",
   "params": {
     "connectionName": "DefaultConnection",
     "schema": "dbo",
@@ -296,26 +296,26 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 11 (GetSqlServerAgentJobs):**
+**Example 11 (mssql_get_agent_jobs):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 13,
-  "method": "GetSqlServerAgentJobs",
+  "id": "11",
+  "method": "mssql_get_agent_jobs",
   "params": {
     "connectionName": "DefaultConnection"
   }
 }
 ```
 
-**Example 12 (GetSqlServerAgentJobDetails):**
+**Example 12 (mssql_get_agent_job_details):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 14,
-  "method": "GetSqlServerAgentJobDetails",
+  "id": "12",
+  "method": "mssql_get_agent_job_details",
   "params": {
     "connectionName": "DefaultConnection",
     "jobName": "DatabaseBackup"
@@ -323,76 +323,76 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 13 (GetSsisCatalogInfo):**
+**Example 13 (mssql_get_ssis_catalog_info):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 15,
-  "method": "GetSsisCatalogInfo",
+  "id": "13",
+  "method": "mssql_get_ssis_catalog_info",
   "params": {
     "connectionName": "DefaultConnection"
   }
 }
 ```
 
-**Example 14 (GetAzureDevOpsInfo):**
+**Example 14 (mssql_get_azure_devops_info):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 16,
-  "method": "GetAzureDevOpsInfo",
+  "id": "14",
+  "method": "mssql_get_azure_devops_info",
   "params": {
     "connectionName": "DefaultConnection"
   }
 }
 ```
 
-**Example 15 (GenerateSecureKey):**
+**Example 15 (mssql_generate_key):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 17,
-  "method": "GenerateSecureKey",
+  "id": "15",
+  "method": "mssql_generate_key",
   "params": {
     "length": 32
   }
 }
 ```
 
-**Example 16 (RotateKey):**
+**Example 16 (mssql_rotate_key):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 18,
-  "method": "RotateKey",
+  "id": "16",
+  "method": "mssql_rotate_key",
   "params": {
     "newKey": "Uew8Ap2aiZoh5Wae/XiaNX2PVHXpnC6kPVX0Tcow4FA="
   }
 }
 ```
 
-**Example 17 (MigrateConnectionsToEncrypted):**
+**Example 17 (mssql_migrate_connections):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 19,
-  "method": "MigrateConnectionsToEncrypted",
+  "id": "17",
+  "method": "mssql_migrate_connections",
   "params": {}
 }
 ```
 
-**Example 18 (CreateApiKey):**
+**Example 18 (mssql_create_key):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 20,
-  "method": "CreateApiKey",
+  "id": "18",
+  "method": "mssql_create_key",
   "params": {
     "request": {
       "name": "Application API Key",
@@ -410,20 +410,20 @@ Below are examples for each of the 17 supported tools:
 {
   "jsonrpc": "2.0",
   "id": 21,
-  "method": "ListUserApiKeys",
+  "method": "mssql_list_user_keys",
   "params": {
     "userId": "app-12345"
   }
 }
 ```
 
-**Example 20 (RevokeApiKey):**
+**Example 20 (mssql_revoke_key):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 22,
-  "method": "RevokeApiKey",
+  "id": "20",
+  "method": "mssql_revoke_key",
   "params": {
     "request": {
       "id": "7f8d9e0a-1b2c-3d4e-5f6g-7h8i9j0k1l2m"
@@ -432,26 +432,26 @@ Below are examples for each of the 17 supported tools:
 }
 ```
 
-**Example 21 (DeleteApiKey):**
+**Example 21 (mssql_delete_key):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 23,
-  "method": "DeleteApiKey",
+  "id": "21",
+  "method": "mssql_delete_key",
   "params": {
     "id": "7f8d9e0a-1b2c-3d4e-5f6g-7h8i9j0k1l2m"
   }
 }
 ```
 
-**Example 22 (GetApiKeyUsageLogs):**
+**Example 22 (mssql_get_key_usage_logs):**
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": 24,
-  "method": "GetApiKeyUsageLogs",
+  "id": "22",
+  "method": "mssql_get_key_usage_logs",
   "params": {
     "apiKeyId": "7f8d9e0a-1b2c-3d4e-5f6g-7h8i9j0k1l2m",
     "limit": 50
@@ -513,7 +513,7 @@ When using the `tools/call` method, the response format is structured to provide
 }
 ```
 
-**Example (GetTableMetadata Response):**
+**Example (mssql_get_table_metadata Response):**
 
 ```json
 {
@@ -593,7 +593,7 @@ When a tool execution fails using the `tools/call` method, the error is included
     "content": [
       {
         "type": "text",
-        "text": "Failed to execute tool ExecuteQuery: Invalid SQL syntax"
+        "text": "Failed to execute tool mssql_execute_query: Invalid SQL syntax"
       }
     ],
     "isError": true
@@ -633,7 +633,7 @@ When GitHub Copilot uses the MCP server, it sends requests to the server via the
   "id": "copilot-request-1",
   "method": "tools/call",
   "params": {
-    "name": "GetTableMetadata",
+    "name": "mssql_get_table_metadata",
     "arguments": {
       "connectionName": "p330d_PROTO",
       "schema": null
@@ -656,7 +656,7 @@ $headers = @{
 $body = @{
     jsonrpc = "2.0"
     id = 1
-    method = "ExecuteQuery"
+    method = "mssql_execute_query"
     params = @{
         query = "SELECT name FROM sys.databases"
         connectionName = "DefaultConnection"
@@ -678,7 +678,7 @@ curl -X POST http://localhost:3001 \
     "id": 1,
     "method": "tools/call",
     "params": {
-      "name": "GetTableMetadata",
+      "name": "mssql_get_table_metadata",
       "arguments": {
         "connectionName": "DefaultConnection",
         "schema": "dbo"
@@ -712,7 +712,7 @@ async function callMcpApi(toolName, arguments = {}) {
 }
 
 // Usage
-const result = await callMcpApi("GetDatabaseObjectsMetadata", {
+const result = await callMcpApi("mssql_get_database_objects_metadata", {
   connectionName: "DefaultConnection",
   includeViews: true,
 });
