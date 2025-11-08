@@ -1,23 +1,23 @@
 openapi: 3.1.0
 info:
   title: SQL Server MCP API
-  version: "1.0.0"
+  version: "1.0.9.5"
   description: |
     API for interacting with the SQL Server Model Context Protocol (MCP) server.
     This server allows tools like GitHub Copilot to connect to SQL Server databases.
     All operations are performed via JSON-RPC 2.0 over HTTP POST.
 
 servers:
-  - url: http://developer.rsyslab.com:3001
-    description: Developer MCP Server (from .vscode/mcp.json)
+  - url: http://localhost:3001
+    description: MCP Server for SQL Server Database Operations
 
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key for authenticating requests (as configured in mcp.json and server).
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Bearer token
+      description: Bearer token authentication using Authorization header. API key must be provided with format 'Bearer <your-api-key>'. Configure API key via MSSQL_MCP_API_KEY environment variable or ApiSecurity:ApiKey in appsettings.json. Authentication is optional if no API key is configured.
 
   schemas:
     # Base JSON-RPC Structures
@@ -543,7 +543,7 @@ components:
       description: "Migrate unencrypted connection strings to encrypted format."
 
 security:
-  - ApiKeyAuth: []
+  - BearerAuth: []
 
 paths:
   /:
@@ -588,6 +588,10 @@ paths:
                   - $ref: '#/components/schemas/JsonRpcSuccessResponse'
                   - $ref: '#/components/schemas/JsonRpcErrorResponse'
         '401':
-          description: Unauthorized. API Key is missing or invalid.
+          description: Unauthorized. Bearer token missing or malformed in Authorization header.
         '403':
-          description: Forbidden. API Key is valid but does not have permission.
+          description: Forbidden. Bearer token is invalid.
+        '406':
+          description: Not Acceptable. Content negotiation failed.
+        '415':
+          description: Unsupported Media Type. Request content type must be application/json.
