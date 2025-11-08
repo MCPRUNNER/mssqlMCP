@@ -2,9 +2,25 @@
 
 This is a Model Context Protocol (MCP) server that connects to one or more SQL Server databases; designed to be used by Visual Studio Code as a Copilot Agent.
 
-## 🚨 Recent Security Updates (November 2025)
+## 🚨 Recent Updates (November 2025)
 
-**Important**: This project has received significant security enhancements in November 2025. Please review the [Security Update Documentation](./Documentation/MERGE_UPDATE_NOVEMBER_2025.md) for:
+**Version 1.0.9.5** - Documentation Standardization & Tool Naming Consistency
+
+**Important**: This version includes comprehensive documentation updates and tool naming standardization. All MCP tools now use consistent `mssql_` prefixed names. Key improvements include:
+
+- **Standardized Tool Names**: All tools now use `mssql_` prefix (e.g., `mssql_execute_query`, `mssql_get_table_metadata`)
+- **Updated Documentation**: All documentation files synchronized with actual implementation
+- **Enhanced Examples**: C# client examples and console applications updated with correct tool names
+- **Test Suite Updates**: All tests updated and passing with new tool naming conventions
+- **API Reference**: Complete API documentation refresh with accurate tool specifications
+
+**Migration Note**: While tool functionality remains unchanged, documentation and examples have been updated for consistency. See the [RELEASE_NOTES.md](./RELEASE_NOTES.md) for complete details.
+
+---
+
+## 🚨 Security Updates (November 2025)
+
+**Important**: This project received significant security enhancements in November 2025. Please review the [Security Update Documentation](./Documentation/MERGE_UPDATE_NOVEMBER_2025.md) for:
 
 - Enhanced multi-tier API key authentication system
 - Role-based access control (master, admin, user keys)
@@ -377,11 +393,20 @@ The following MCP tools are available for Copilot:
 2. **mssql_execute_query**: Run SQL queries against your database
 3. **mssql_get_table_metadata**: Get metadata about database tables
 4. **mssql_get_database_objects_metadata**: Get metadata about tables, views, and stored procedures
-5. **mssql_list_connections**: Manage database connections
-6. **mssql_add_connection**: Add new database connections
-7. **mssql_update_connection**: Update existing connections
-8. **mssql_remove_connection**: Remove connections
-9. **mssql_test_connection**: Test connection strings
+5. **mssql_get_database_objects_by_type**: Filter database objects by type
+6. **mssql_list_connections**: Manage database connections
+7. **mssql_add_connection**: Add new database connections
+8. **mssql_update_connection**: Update existing connections
+9. **mssql_remove_connection**: Remove connections
+10. **mssql_test_connection**: Test connection strings
+11. **mssql_get_agent_jobs**: Get SQL Server Agent job information
+12. **mssql_get_agent_job_details**: Get detailed job information
+13. **mssql_get_ssis_catalog_info**: Get SSIS catalog information
+14. **mssql_get_azure_devops_info**: Get Azure DevOps analytics
+15. **mssql_create_key**: Create API keys for users
+16. **mssql_generate_key**: Generate encryption keys
+17. **mssql_migrate_connections**: Migrate to encrypted storage
+18. **mssql_rotate_key**: Rotate encryption keys
 
 See the [full documentation](./Documentation/EXAMPLE_USAGE.md) for examples and detailed usage information.
 
