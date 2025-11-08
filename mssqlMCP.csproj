@@ -8,9 +8,9 @@
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
     <PropertyGroup>
-    <Version>1.0.9.4</Version>
-    <AssemblyVersion>1.0.9.4</AssemblyVersion>
-    <FileVersion>1.0.9.4</FileVersion>
+    <Version>1.0.9.5</Version>
+    <AssemblyVersion>1.0.9.5</AssemblyVersion>
+    <FileVersion>1.0.9.5</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
@@ -32,6 +32,10 @@
     <None Include="openapi.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logs\" />
   </ItemGroup>
 
 </Project>

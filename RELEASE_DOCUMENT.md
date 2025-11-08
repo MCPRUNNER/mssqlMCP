@@ -1,17 +1,17 @@
-# mssqlMCP Release Documentation (1.0.9.4)
+# mssqlMCP Release Documentation (1.0.9.5)
 
-**Release Date:** November 6, 2025  
-**Current Branch:** documentation.3  
+**Release Date:** November 8, 2025  
+**Current Branch:** testing_docs.1  
 **Release Branch:** origin/main
 
 ## Summary of Changes
 
-This release represents the comprehensive documentation branch (documentation.2) for the mssqlMCP project, a Model Context Protocol (MCP) Server that provides SQL Server database connectivity for VS Code and Copilot integration.
+This release represents the documentation standardization and tool naming consistency update for the mssqlMCP project, a Model Context Protocol (MCP) Server that provides SQL Server database connectivity for VS Code and Copilot integration. Major improvements include comprehensive documentation updates, standardized tool naming conventions, and enhanced example implementations.
 
 ## Application Overview
 
 **Application Name:** mssqlMCP  
-**Version:** 1.0.1.2  
+**Version:** 1.0.9.5  
 **Project File:** mssqlMCP.csproj  
 **Repository:** MCPRUNNER/mssqlMCP
 
@@ -257,4 +257,4 @@ For issues and questions:
 
 ---
 
-_This release document was generated automatically using GitVisionMCP tools on August 12, 2025_
+_This release document was generated automatically using GitVisionMCP tools on November 8, 2025_
