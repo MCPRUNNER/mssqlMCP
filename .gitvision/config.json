@@ -2,7 +2,7 @@
     "Project": {
         "Name": "mssqlMCP",
         "RelativePath": "mssqlMCP.csproj",
-        "Version": "1.0.2"
+        "Version": "1.0.9.5"
     },
     "Settings": {
         "maxCommits": 200,

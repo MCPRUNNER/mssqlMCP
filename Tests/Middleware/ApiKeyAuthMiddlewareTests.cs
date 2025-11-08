@@ -52,9 +52,9 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{}")]
+        [InlineData("mssql_get_table_metadata", "{}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_AccessingAllowedEndpoint_ShouldSucceed(string method, string @params)
         {
             // Arrange
@@ -74,9 +74,9 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("CreateApiKey", "{}")]
+        [InlineData("mssql_create_key", "{}")]
         [InlineData("tools/call",
-            "{\"name\":\"CreateApiKey\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_create_key\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_AccessingManagementEndpoint_ShouldBeForbidden(string method, string @params)
         {
             // Arrange
@@ -96,14 +96,19 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("CreateApiKey", "{}")]
+        [InlineData("mssql_create_key", "{}")]
         [InlineData("tools/call",
-            "{\"name\":\"CreateApiKey\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_create_key\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task AdminKey_AccessingManagementEndpoint_ShouldSucceed(string method, string @params)
         {
             // Arrange
             var adminApiKey = new ApiKey
-                { Id = "admin1", Name = "Test Admin Key", Key = "admin-key", KeyType = "admin" };
+            {
+                Id = "admin1",
+                Name = "Test Admin Key",
+                Key = "admin-key",
+                KeyType = "admin"
+            };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("admin-key")).ReturnsAsync(adminApiKey);
             _apiKeyManager.Setup(m => m.ValidateApiKeyAsync("admin-key")).ReturnsAsync(true);
 
@@ -119,9 +124,9 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("CreateApiKey", "{}")]
+        [InlineData("mssql_create_key", "{}")]
         [InlineData("tools/call",
-            "{\"name\":\"CreateApiKey\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_create_key\",\"arguments\":{},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task MasterKey_AccessingAnyEndpoint_ShouldSucceed(string method, string @params)
         {
             // Arrange
@@ -157,15 +162,18 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{\"connectionName\":\"conn1\"}")]
+        [InlineData("mssql_get_table_metadata", "{\"connectionName\":\"conn1\"}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_WithAllowedConnection_ShouldSucceed(string method, string @params)
         {
             // Arrange
             var userApiKey = new ApiKey
             {
-                Id = "user1", Name = "Test User Key", Key = "user-key", KeyType = "user",
+                Id = "user1",
+                Name = "Test User Key",
+                Key = "user-key",
+                KeyType = "user",
                 AllowedConnectionNames = "[\"conn1\",\"conn2\"]"
             };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("user-key")).ReturnsAsync(userApiKey);
@@ -183,15 +191,18 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{\"connectionName\":\"conn3\"}")]
+        [InlineData("mssql_get_table_metadata", "{\"connectionName\":\"conn3\"}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{\"connectionName\":\"conn3\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{\"connectionName\":\"conn3\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_WithDisallowedConnection_ShouldBeForbidden(string method, string @params)
         {
             // Arrange
             var userApiKey = new ApiKey
             {
-                Id = "user1", Name = "Test User Key", Key = "user-key", KeyType = "user",
+                Id = "user1",
+                Name = "Test User Key",
+                Key = "user-key",
+                KeyType = "user",
                 AllowedConnectionNames = "[\"conn1\",\"conn2\"]"
             };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("user-key")).ReturnsAsync(userApiKey);
@@ -210,16 +221,19 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{\"connectionName\":\"conn1\"}")]
+        [InlineData("mssql_get_table_metadata", "{\"connectionName\":\"conn1\"}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_WithConnectionRestriction_AndNoConnectionInRequest_ShouldSucceed(string method,
             string @params)
         {
             // Arrange
             var userApiKey = new ApiKey
             {
-                Id = "user1", Name = "Test User Key", Key = "user-key", KeyType = "user",
+                Id = "user1",
+                Name = "Test User Key",
+                Key = "user-key",
+                KeyType = "user",
                 AllowedConnectionNames = "[\"conn1\",\"conn2\"]"
             };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("user-key")).ReturnsAsync(userApiKey);
@@ -237,15 +251,19 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{\"connectionName\":\"conn1\"}")]
+        [InlineData("mssql_get_table_metadata", "{\"connectionName\":\"conn1\"}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_WithNoConnectionRestriction_ShouldSucceed(string method, string @params)
         {
             // Arrange
             var userApiKey = new ApiKey
             {
-                Id = "user1", Name = "Test User Key", Key = "user-key", KeyType = "user", AllowedConnectionNames = "[]"
+                Id = "user1",
+                Name = "Test User Key",
+                Key = "user-key",
+                KeyType = "user",
+                AllowedConnectionNames = "[]"
             };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("user-key")).ReturnsAsync(userApiKey);
             _apiKeyManager.Setup(m => m.ValidateApiKeyAsync("user-key")).ReturnsAsync(true);
@@ -262,15 +280,19 @@ namespace mssqlMCP.Tests.Middleware
         }
 
         [Theory]
-        [InlineData("GetTableMetadata", "{\"connectionName\":\"conn1\"}")]
+        [InlineData("mssql_get_table_metadata", "{\"connectionName\":\"conn1\"}")]
         [InlineData("tools/call",
-            "{\"name\":\"GetTableMetadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
+            "{\"name\":\"mssql_get_table_metadata\",\"arguments\":{\"connectionName\":\"conn1\"},\"_meta\":{\"progressToken\":\"1b4863a3-316a-4796-9a04-77282098a038\"}}")]
         public async Task UserKey_WithNullAllowedConnectionNames(string method, string @params)
         {
             // Arrange
             var userApiKey = new ApiKey
             {
-                Id = "user1", Name = "Test User Key", Key = "user-key", KeyType = "user", AllowedConnectionNames = null
+                Id = "user1",
+                Name = "Test User Key",
+                Key = "user-key",
+                KeyType = "user",
+                AllowedConnectionNames = null
             };
             _apiKeyRepository.Setup(r => r.GetApiKeyByValueAsync("user-key")).ReturnsAsync(userApiKey);
             _apiKeyManager.Setup(m => m.ValidateApiKeyAsync("user-key")).ReturnsAsync(true);

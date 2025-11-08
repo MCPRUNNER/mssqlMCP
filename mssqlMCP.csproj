@@ -8,9 +8,9 @@
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
     <PropertyGroup>
-    <Version>1.0.9.4</Version>
-    <AssemblyVersion>1.0.9.4</AssemblyVersion>
-    <FileVersion>1.0.9.4</FileVersion>
+    <Version>1.0.9.5</Version>
+    <AssemblyVersion>1.0.9.5</AssemblyVersion>
+    <FileVersion>1.0.9.5</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
@@ -20,8 +20,8 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.1.0-preview.13" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Moq" Version="4.20.70" />
-    <PackageReference Include="xunit" Version="2.6.6" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -32,6 +32,10 @@
     <None Include="openapi.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logs\" />
   </ItemGroup>
 
 </Project>

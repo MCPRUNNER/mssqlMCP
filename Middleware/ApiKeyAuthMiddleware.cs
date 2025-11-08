@@ -36,8 +36,8 @@ public class ApiKeyAuthMiddleware
     private static readonly HashSet<string> UserAllowedApiNames = new()
     {
         "notifications/initialized", "tools/list",
-        "Initialize", "ExecuteQuery", "GetTableMetadata", "GetDatabaseObjectsMetadata", "GetDatabaseObjectsByType",
-        "GetSqlServerAgentJobs", "GetSqlServerAgentJobDetails", "GetSsisCatalogInfo", "GetAzureDevOpsInfo"
+        "mssql_initialize_connection", "mssql_execute_query", "mssql_get_table_metadata", "mssql_get_database_objects_metadata", "mssql_get_database_objects_by_type",
+        "mssql_get_agent_jobs", "mssql_get_agent_job_details", "mssql_get_ssis_catalog_info", "mssql_get_azure_devops_info"
     };
 
     public async Task InvokeAsync(HttpContext context)

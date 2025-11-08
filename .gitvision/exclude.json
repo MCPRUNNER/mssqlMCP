@@ -13,5 +13,5 @@
     "**/.gitvision/**"
   ],
   "description": "Default exclude patterns for workspace file operations",
-  "version": "1.0.8"
+  "version": "1.0.9.5"
 }
