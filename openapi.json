@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SQL Server MCP API",
-    "version": "1.0.0.5",
+    "version": "1.0.9.5",
     "description": "API for interacting with the SQL Server Model Context Protocol (MCP) server.\nThis server allows tools like GitHub Copilot to connect to SQL Server databases.\nAll operations are performed via JSON-RPC 2.0 over HTTP POST.\n\nAuthentication is required using Bearer token scheme when API key is configured."
   },
   "servers": [
@@ -184,7 +184,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["Initialize"]
+                "enum": ["mssql_initialize_connection"]
               },
               "params": {
                 "$ref": "#/components/schemas/InitializeParams"
@@ -220,7 +220,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["ExecuteQuery"]
+                "enum": ["mssql_execute_query"]
               },
               "params": {
                 "$ref": "#/components/schemas/ExecuteQueryParams"
@@ -256,7 +256,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetTableMetadata"]
+                "enum": ["mssql_get_table_metadata"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetTableMetadataParams"
@@ -297,7 +297,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetDatabaseObjectsMetadata"]
+                "enum": ["mssql_get_database_objects_metadata"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetDatabaseObjectsMetadataParams"
@@ -338,7 +338,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetDatabaseObjectsByType"]
+                "enum": ["mssql_get_database_objects_by_type"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetDatabaseObjectsByTypeParams"
@@ -369,7 +369,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetSqlServerAgentJobs"]
+                "enum": ["mssql_get_agent_jobs"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetSqlServerAgentJobsParams"
@@ -405,7 +405,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetSqlServerAgentJobDetails"]
+                "enum": ["mssql_get_agent_job_details"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetSqlServerAgentJobDetailsParams"
@@ -436,7 +436,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetSsisCatalogInfo"]
+                "enum": ["mssql_get_ssis_catalog_info"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetSsisCatalogInfoParams"
@@ -467,7 +467,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GetAzureDevOpsInfo"]
+                "enum": ["mssql_get_azure_devops_info"]
               },
               "params": {
                 "$ref": "#/components/schemas/GetAzureDevOpsInfoParams"
@@ -488,7 +488,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["ListConnections"]
+                "enum": ["mssql_list_connections"]
               },
               "params": {
                 "type": "object",
@@ -519,7 +519,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["AddConnection"]
+                "enum": ["mssql_add_connection"]
               },
               "params": {
                 "$ref": "#/components/schemas/AddConnectionParams"
@@ -549,7 +549,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["UpdateConnection"]
+                "enum": ["mssql_update_connection"]
               },
               "params": {
                 "$ref": "#/components/schemas/UpdateConnectionParams"
@@ -579,7 +579,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["RemoveConnection"]
+                "enum": ["mssql_remove_connection"]
               },
               "params": {
                 "$ref": "#/components/schemas/RemoveConnectionParams"
@@ -609,7 +609,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["TestConnection"]
+                "enum": ["mssql_test_connection"]
               },
               "params": {
                 "$ref": "#/components/schemas/TestConnectionParams"
@@ -640,7 +640,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["RotateKey"]
+                "enum": ["mssql_rotate_key"]
               },
               "params": {
                 "$ref": "#/components/schemas/RotateKeyParams"
@@ -671,7 +671,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["GenerateSecureKey"]
+                "enum": ["mssql_generate_key"]
               },
               "params": {
                 "$ref": "#/components/schemas/GenerateSecureKeyParams"
@@ -692,7 +692,7 @@
             "properties": {
               "method": {
                 "type": "string",
-                "enum": ["MigrateConnectionsToEncrypted"]
+                "enum": ["mssql_migrate_connections"]
               },
               "params": {
                 "type": "object",
