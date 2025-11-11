@@ -17,7 +17,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: Bearer token
-      description: Bearer token authentication using Authorization header. API key must be provided with format 'Bearer <your-api-key>'. Configure API key via MSSQL_MCP_API_KEY environment variable or ApiSecurity:ApiKey in appsettings.json. Authentication is optional if no API key is configured.
+      description: Bearer token authentication using Authorization header. Token must be provided with format 'Bearer <your-token>'. Configure via MSSQL_MCP_API_KEY environment variable or ApiSecurity:ApiKey in appsettings.json. Authentication is optional if no token is configured.
 
   schemas:
     # Base JSON-RPC Structures
