@@ -8,7 +8,7 @@ applyTo: "**/*.sql"
 
 - Use clear and concise language.
 - Follow the T-SQL coding conventions.
-- Ensure all code is well-documented with XML comments.
+- Ensure all code is well-documented using standard SQL comments (`--` for single-line and `/* ... */` for multi-line).
 - Implement error handling with try catch
 - Add logging where appropriate.
 - Use meaningful names for variables, tables, and other database objects.
